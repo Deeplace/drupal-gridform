@@ -1,0 +1,329 @@
+<?php
+
+/*
+ * Implementation of hook_elements(  )
+*/
+function gridform_elements() {
+  $type['grid'] = array( 
+       '#input' => TRUE,
+       '#header' => NULL,
+       '#default_value' => NULL,
+       '#row_count' => NULL,
+       '#process' => array('gridform_grid_expand'),
+    );
+  $type['tablegrid'] = array( 
+       '#input' => TRUE,
+       '#layout' => 'vertical',
+       '#process' => array('gridform_table_expand'),
+    );
+  $type['combobox'] = array( 
+       '#input' => TRUE,
+       '#process' => array('gridform_combobox_expand'),
+    );
+  return $type;
+}
+
+/**
+ * Our process callback to expand the table control.
+ */
+function gridform_table_expand($element) {
+    $element['#tree'] = TRUE;
+    
+    foreach( element_children( $element ) as $key ){
+        $element[$key]['#input'] = FALSE;
+    }
+    return $element;
+}
+
+/**
+ * Our process callback to expand the grid control.
+ */
+function gridform_grid_expand($element) {
+    $element['#tree'] = TRUE;
+
+    $markups = array( 
+        'rowstart' => array( '#type'=>'markup', '#value'=>theme( 'grid_rowstart' ) ),
+        'rowend' => array( '#type'=>'markup', '#value'=>theme( 'grid_rowend' ) ),
+        'innercell' => array( '#type'=>'markup', '#value'=>theme( 'grid_innercell' ) ),
+    );
+
+    $out = array( );
+    $el_iter = 0;
+    $max_colls = 1;
+    foreach ( $element as $sub_key=>$sub_val ) {
+        //Just copy all params
+        if ( element_property($sub_key) || !is_array( $sub_val )) {
+            $out[$sub_key] = $sub_val; 
+        }else {
+            //If double arr - bidimensional array
+            if ( $children = element_children( $sub_val ) && !array_key_exists( '#type', $sub_val )) {
+                $children_count = sizeof( $children );
+                $out_sub_val = array( );
+                $el2_iter = 0;
+                foreach( $sub_val as $sub2_key=>$sub2_val ) {
+                    if ( element_property($sub_key) || !is_array( $sub_val )) {
+                        $out_sub_val[$sub2_key] = $sub2_val; 
+                    }else {
+                        if ( !$el2_iter ) {
+                            $out_sub_val['grid_sep2_' . $el2_iter] = $markups['rowstart'];
+                        }else {
+                            $out_sub_val['grid_sep2_' . $el2_iter] = $markups['innercell'];
+                        }
+                        $el2_iter++;
+                        $out_sub_val[$sub2_key] = $sub2_val;
+                    }
+                }
+                $max_colls = max( $el2_iter, $max_colls );
+                $out_sub_val['grid_sep2_' . $el2_iter] = $markups['rowend'];
+                $out[$sub_key] = $out_sub_val;
+            } elseif (  $element['#layout']=='horizontal' ) { //Horizontal simple layout, if set explicit
+                if ( !$el_iter ) {
+                    $out['grid_sep_' . $el_iter] = $markups['rowstart'];
+                }else {
+                    $out['grid_sep_' . $el_iter] = $markups['innercell'];
+                }
+                $out[$sub_key] = $sub_val;
+                $el_iter++;
+            } else { //Vertical implicit layout
+                $out['grid_sep_' . $el_iter] = $max_colls > 1 ? array( 
+                                '#type'=>'markup', 
+                                '#value'=>theme( 'grid_rowstart', array( 'colspan'=>$max_colls ) )
+                            ) :
+                                $markups['rowstart'];
+                $out[$sub_key] = $sub_val;
+                $el_iter++;
+                $out['grid_sep_' . $el_iter] = $markups['rowend'];
+            }
+
+            /* analize sub_val
+             if double arr
+                     push row start . 
+                                        expand_one_row(  )  {
+                                                while
+                                                push cell start . 2nd level inner_el . cell end
+                                        }
+                                       . row_end
+             
+             if single arr and vertical
+                    push row_start . cell start . element . cell end . row end
+             if single arr and horizontal 
+                    if ( first )
+                        push row-start . cell start . el
+                    if last 
+                        push el. cell end . row_end
+                     else 
+                        cell_end, cell_start . el
+                    */
+
+        }
+    }
+    if ( $element['markup'] == 'horizontal' ) {
+        $out['grid_sep_' . $el_iter] = $markups['rowend'];
+    }
+  return $out;
+}
+
+/**
+ * Implementation of hook_theme().
+ * 
+ * This lets us tell Drupal about our theme functions and their arguments.
+ */
+function gridform_theme(  ){
+  return array(
+    'grid' => array(
+      'arguments' => array('element'),
+    ),
+    'grid_rowstart' => array(
+      'arguments' => array( 'attributes'=>NULL),
+    ),
+    'grid_rowend' => array(
+      'arguments' => array(),
+    ),
+    'grid_innercell' => array(
+      'arguments' => array('attributes'=>NULL),
+    ),
+    'tablegrid' => array(
+      'arguments' => array('element'),
+    ),
+    'combobox' => array(
+      'arguments' => array('element'),
+    ),
+  );
+}
+
+function theme_grid_rowstart( $attributes = NULL ){
+    return '<tr><td '. drupal_attributes($attributes) . '>';
+}
+
+function theme_grid_rowend(  ){
+    return '</td></tr>';
+}
+
+function theme_grid_innercell( $attributes = NULL ){
+    return '</td><td '. drupal_attributes($attributes) . '>';
+}
+
+
+/**
+ * Theme function to format the output of grid form element type.
+ *
+ */
+function theme_grid(  $element ){
+  $rows = array(  );
+
+  if (!empty($element['#description'])) {
+    $output .= ' <div class="description">'. $element['#description'] ."</div>\n";
+  }
+
+ $output .= '<div ' . drupal_attributes($element['#attributes']) .'>'. ($element['#title'] ? '<h4>'. $element['#title'] .'</h4>' : '') . (!empty($element['#children']) ? '<table>' . $element['#children'] . '</table>' : '') . (isset($element['#value']) ? $element['#value'] : '') ."</div>\n";
+
+  return $output;
+}
+
+
+function gridform_table_fillrow( $row, $vals, $row_index, $parent_name ){
+    $out = array(  );
+    $it = 0;
+    foreach ( $row as $item_key=>$item ) {
+        if ( is_array( $item ) ) {
+                $item['#value'] = $vals[$it];
+                $item['#name'] = $parent_name . "[$row_index][$item_key]";
+                $out[] = drupal_render( $item );
+        } else {
+            //replace
+            $replacements = array(  
+                '{%ROW_VAL_PLACEHOLDER%}' => $vals[$it],
+                '{%ROW_IND_PLACEHOLDER%}' => $row_index,
+            );
+            $out[] = strtr( $item, $replacements);
+        }
+
+        $it++;
+    }
+    return $out;
+}
+
+/**
+ * Theme function to format the output of tablegrid form element type.
+ *
+ */
+function theme_tablegrid(  $element ){
+    /* Do analysis
+        #header empty -{ foreach children $header[] = $child['#title'] } :  $element['#header']
+        foreach ( $values ) $rows[] = $def_row fill with value
+        while ( $min_rows - count( $element['#values']) ) - $rows[] = $row with def values
+    */
+  $header = $rows = $def_row = $def_row_val = array(  );
+  if ( isset( $element['#header'] ) && is_array( $element['#header'] )) {
+    $header = $element['#header'];
+  }
+  
+  foreach ( element_children( $element ) as $item_key ) {
+        $item = $element[$item_key];
+        
+        if ( is_array( $item ) ) {
+            if ( !isset( $element['#header'] ) || !is_array( $element['#header'] )) {
+                $header[] = $item['#title'];
+            }
+            unset( $item['#title'], $item['#description'] );
+
+            //Fill array with default values
+            if ( $item['#default_value'] ) {
+                $def_row_val[] = $item['#default_value'];
+            }elseif ( $item['$value'] ){
+                $def_row_val[] = $item['value'];
+            }else {
+                $def_row_val[] = 0;
+            }
+
+            unset( $item['#printed'], $item['#value']);
+            //for simple form elements - generate formated stubs with placeholders
+            if ( in_array( $item['#type'], array( 'textfield', 'textarea', 'hidden', 'token' ) ) ) {
+                $item['#value'] = '{%ROW_VAL_PLACEHOLDER%}';
+                $item['#name'] = $element['#name'] . '[{%ROW_IND_PLACEHOLDER%}][' . $item_key . ']';
+                $def_row[$item_key] = drupal_render( $item );
+            }else{ //For other types - delay html code generation
+                $def_row[$item_key] = $item;
+            }
+
+        }
+  }
+
+  $row_ind = 0;
+  if ( is_array( $element['#default_value']) ) {
+    foreach ( $element['#default_value'] as $value_row) {
+        $rows[] = gridform_table_fillrow( $def_row, $value_row, $row_ind++, $element['#name'] );
+    }
+  }
+
+  //Test for count of needed autogenerated rows
+   for ( $rows_to_add = $element['#row_count'] - count( $rows ); $rows_to_add > 0; $rows_to_add-- ){
+        $rows[] = gridform_table_fillrow( $def_row, $def_row_val, $row_ind++, $element['#name'] );
+   }
+    
+
+
+  if (!empty($element['#description'])) {
+    $output .= ' <div class="description">'. $element['#description'] ."</div>\n";
+  }
+  $output .= theme_table($header, $rows, $element['#attributes'], $element['#title']);
+
+  return $output;
+}
+
+function form_type_tablegrid_value($element, $edit = FALSE) {
+   if (func_num_args() == 1) {
+        return $element['#default_value'];
+   }
+    
+    //Check for checkboxes; if there are no any, just return edit
+
+    $have_checkbox = 0;
+    foreach ( ( $children = element_children( $element)) as $child_key ) {
+        if ( $element[$child_key]['#type'] == 'checkbox' ) {
+            $have_checkbox = TRUE;
+        }
+    }
+
+    if ( $have_checkbox ) {
+        $out = array(  );
+        $def_row = array_fill_keys( $children, 0 );
+        foreach( $edit as $row_ind=>$row ) {
+            $out[$row_ind] = array_merge( $def_row, $row );
+        }
+        return $out;
+    } 
+
+    return $edit;
+}
+
+/**
+ * Theme function to format the output of combobox form element type.
+ *
+ */
+function theme_combobox(  $element ){
+  $size = empty($element['#size']) ? '' : ' size="'. $element['#size'] .'"';
+  $maxlength = empty($element['#maxlength']) ? '' : ' maxlength="'. $element['#maxlength'] .'"';
+  $class = array('form-text');
+  $extra = '';
+  $output = '';
+
+  if ($element['#autocomplete_path'] && menu_valid_path(array('link_path' => $element['#autocomplete_path']))) {
+    drupal_add_js('misc/autocomplete.js');
+    $class[] = 'form-autocomplete';
+    $extra =  '<input class="autocomplete" type="hidden" id="'. $element['#id'] .'-autocomplete" value="'. check_url(url($element['#autocomplete_path'], array('absolute' => TRUE))) .'" disabled="disabled" />';
+  }
+  _form_set_class($element, $class);
+
+  if (isset($element['#field_prefix'])) {
+    $output .= '<span class="field-prefix">'. $element['#field_prefix'] .'</span> ';
+  }
+
+  $output .= '<input type="text"'. $maxlength .' name="'. $element['#name'] .'" id="'. $element['#id'] .'"'. $size .' value="'. check_plain($element['#value']) .'"'. drupal_attributes($element['#attributes']) .' />';
+
+  if (isset($element['#field_suffix'])) {
+    $output .= ' <span class="field-suffix">'. $element['#field_suffix'] .'</span>';
+  }
+
+  return theme('form_element', $element, $output) . $extra;
+}
