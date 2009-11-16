@@ -188,6 +188,21 @@ function gridform_table_fillrow( $row, $vals, $row_index, $parent_name ){
         if ( is_array( $item ) ) {
                 $item['#value'] = $vals[$it];
                 $item['#name'] = $parent_name . "[$row_index][$item_key]";
+                /* Grab form element info*/
+                if ((!empty($item['#type'])) && ($info = _element_info($item['#type']))) {
+                    // Overlay $info onto $form, retaining preexisting keys in $form.
+                    $item += $info;
+                }
+                /* And process form element if needed */
+                if (isset($item['#process']) && !$item['#processed']) {
+                  foreach ($item['#process'] as $process) {
+                    if (function_exists($process)) {
+                      $item = $process($item,NULL, $form_state, $complete_form);
+                    }
+                  }
+                  $item['#processed'] = TRUE;
+                }
+                /* Now we are ready to render form element */
                 $out[] = drupal_render( $item );
         } else {
             //replace
