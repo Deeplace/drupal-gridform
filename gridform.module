@@ -39,8 +39,6 @@ function gridform_table_expand($element) {
  * Our process callback to expand the grid control.
  */
 function gridform_grid_expand($element) {
-    $element['#tree'] = TRUE;
-
     $markups = array( 
         'rowstart' => array( '#type'=>'markup', '#value'=>theme( 'grid_rowstart' ) ),
         'rowend' => array( '#type'=>'markup', '#value'=>theme( 'grid_rowend' ) ),
