@@ -184,7 +184,7 @@ function gridform_table_fillrow( $row, $vals, $row_index, $parent_name ){
     $it = 0;
     foreach ( $row as $item_key=>$item ) {
         if ( is_array( $item ) ) {
-                $item['#value'] = $vals[$it];
+                $item['#value'] = $vals[$item_key] ? $vals[$item_key] : $vals[$it];
                 $item['#name'] = $parent_name . "[$row_index][$item_key]";
                 /* Grab form element info*/
                 if ((!empty($item['#type'])) && ($info = _element_info($item['#type']))) {
@@ -205,7 +205,7 @@ function gridform_table_fillrow( $row, $vals, $row_index, $parent_name ){
         } else {
             //replace
             $replacements = array(  
-                '{%ROW_VAL_PLACEHOLDER%}' => $vals[$it],
+                '{%ROW_VAL_PLACEHOLDER%}' => $vals[$item_key] ? $vals[$item_key] : $vals[$it],
                 '{%ROW_IND_PLACEHOLDER%}' => $row_index,
             );
             $out[] = strtr( $item, $replacements);
