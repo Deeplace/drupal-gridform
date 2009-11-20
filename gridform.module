@@ -16,10 +16,6 @@ function gridform_elements() {
        '#layout' => 'vertical',
        '#process' => array('gridform_table_expand'),
     );
-  $type['combobox'] = array( 
-       '#input' => TRUE,
-       '#process' => array('gridform_combobox_expand'),
-    );
   return $type;
 }
 
@@ -143,9 +139,6 @@ function gridform_theme(  ){
     'tablegrid' => array(
       'arguments' => array('element'),
     ),
-    'combobox' => array(
-      'arguments' => array('element'),
-    ),
   );
 }
 
@@ -191,7 +184,9 @@ function gridform_table_fillrow( $row, $vals, $row_index, $parent_name ){
                     // Overlay $info onto $form, retaining preexisting keys in $form.
                     $item += $info;
                 }
+                
                 /* And process form element if needed */
+                $item['#id'] = form_clean_id('edit-'. implode('-', $item['#parents']));
                 if (isset($item['#process']) && !$item['#processed']) {
                   foreach ($item['#process'] as $process) {
                     if (function_exists($process)) {
@@ -310,33 +305,4 @@ function form_type_tablegrid_value($element, $edit = FALSE) {
     return $edit;
 }
 
-/**
- * Theme function to format the output of combobox form element type.
- *
- */
-function theme_combobox(  $element ){
-  $size = empty($element['#size']) ? '' : ' size="'. $element['#size'] .'"';
-  $maxlength = empty($element['#maxlength']) ? '' : ' maxlength="'. $element['#maxlength'] .'"';
-  $class = array('form-text');
-  $extra = '';
-  $output = '';
 
-  if ($element['#autocomplete_path'] && menu_valid_path(array('link_path' => $element['#autocomplete_path']))) {
-    drupal_add_js('misc/autocomplete.js');
-    $class[] = 'form-autocomplete';
-    $extra =  '<input class="autocomplete" type="hidden" id="'. $element['#id'] .'-autocomplete" value="'. check_url(url($element['#autocomplete_path'], array('absolute' => TRUE))) .'" disabled="disabled" />';
-  }
-  _form_set_class($element, $class);
-
-  if (isset($element['#field_prefix'])) {
-    $output .= '<span class="field-prefix">'. $element['#field_prefix'] .'</span> ';
-  }
-
-  $output .= '<input type="text"'. $maxlength .' name="'. $element['#name'] .'" id="'. $element['#id'] .'"'. $size .' value="'. check_plain($element['#value']) .'"'. drupal_attributes($element['#attributes']) .' />';
-
-  if (isset($element['#field_suffix'])) {
-    $output .= ' <span class="field-suffix">'. $element['#field_suffix'] .'</span>';
-  }
-
-  return theme('form_element', $element, $output) . $extra;
-}
