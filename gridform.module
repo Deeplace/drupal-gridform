@@ -27,6 +27,11 @@ function gridform_table_expand($element) {
     
     foreach( element_children( $element ) as $key ){
         $element[$key]['#input'] = FALSE;
+        /* Grab form element info*/
+        if ((!empty($element[$key]['#type'])) && ($info = _element_info($element[$key]['#type']))) {
+            // Overlay $info onto $form, retaining preexisting keys in $form.
+            $element[$key] += $info;
+        }
     }
     return $element;
 }
@@ -179,11 +184,6 @@ function gridform_table_fillrow( $row, $vals, $row_index, $parent_name ){
         if ( is_array( $item ) ) {
                 $item['#value'] = $vals[$item_key] ? $vals[$item_key] : $vals[$it];
                 $item['#name'] = $parent_name . "[$row_index][$item_key]";
-                /* Grab form element info*/
-                if ((!empty($item['#type'])) && ($info = _element_info($item['#type']))) {
-                    // Overlay $info onto $form, retaining preexisting keys in $form.
-                    $item += $info;
-                }
                 
                 /* And process form element if needed */
                 $item['#id'] = form_clean_id('edit-'. implode('-', $item['#parents']));
@@ -245,6 +245,7 @@ function theme_tablegrid(  $element ){
             }
 
             unset( $item['#printed'], $item['#value']);
+            
             //for simple form elements - generate formated stubs with placeholders
             if ( in_array( $item['#type'], array( 'textfield', 'textarea', 'hidden', 'token' ) ) ) {
                 $item['#value'] = '{%ROW_VAL_PLACEHOLDER%}';
@@ -286,18 +287,56 @@ function form_type_tablegrid_value($element, $edit = FALSE) {
     
     //Check for checkboxes; if there are no any, just return edit
 
-    $have_checkbox = 0;
+    $complete_parse = FALSE;
     foreach ( ( $children = element_children( $element)) as $child_key ) {
-        if ( $element[$child_key]['#type'] == 'checkbox' ) {
-            $have_checkbox = TRUE;
+        if ( in_array( $element[$child_key]['#type'], array( 'checkbox', 'maskedinput' )) ) {
+            $complete_parse = TRUE;
         }
     }
 
-    if ( $have_checkbox ) {
+    if ( $complete_parse ) {
+        $row_count = count( $edit );
         $out = array(  );
-        $def_row = array_fill_keys( $children, 0 );
-        foreach( $edit as $row_ind=>$row ) {
-            $out[$row_ind] = array_merge( $def_row, $row );
+        $parent_name = end( $element['#parents'] );
+
+        //Run form_type_hook_value on each tablegrid element
+        foreach( $children as $child_key ) {
+            if ((!empty($element[$child_key]['#type'])) && ($info = _element_info($element[$child_key]['#type']))) {
+                // Overlay $info onto $form, retaining preexisting keys in $form.
+                $element[$child_key] += $info;
+            }
+            
+            $child_func = 'form_type_' . $element[$child_key]['#type'] . '_value';
+            if ( function_exists( $child_func) ) {
+                for( $row_ind = 0; $row_ind < $row_count; $row_ind++ ) {
+                    $element_value = $child_func( $element[$child_key], $edit[$row_ind][$child_key] );
+                    if ( $element_value ) {
+                        $out[$row_ind][$child_key] = $element_value;
+                    } else {
+                        $out[$row_ind][$child_key] = $edit[$row_ind][$child_key];
+                    }
+                }
+            } else  {
+                for( $row_ind = 0; $row_ind < $row_count; $row_ind++ ) {
+                    $out[$row_ind][$child_key] = $edit[$row_ind][$child_key];
+                }
+            }
+            //Run element validate functions
+            if ( is_array( $element[$child_key]['#element_validate'] ) && count( $element[$child_key]['#element_validate'] )  ) {
+                $form_state = array(  );
+                $test_element = $element[$child_key];
+                foreach ( $element[$child_key]['#element_validate'] as $validate_func ) {
+                    if ( function_exists( $validate_func ) ) {
+                        for( $row_ind = 0; $row_ind < $row_count; $row_ind++ ) {
+                            $test_element['#value'] = $out[$row_ind][$child_key];
+                            $test_element['#name'] = $parent_name . "[$row_ind][$child_key]";
+                            $validate_func( $test_element, $form_state );
+                        }
+
+                    }
+
+                }
+            }
         }
         return $out;
     } 
