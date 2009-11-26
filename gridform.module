@@ -186,7 +186,7 @@ function gridform_table_fillrow( $row, $vals, $row_index, $parent_name ){
                 $item['#name'] = $parent_name . "[$row_index][$item_key]";
                 
                 /* And process form element if needed */
-                $item['#id'] = form_clean_id('edit-'. implode('-', $item['#parents']));
+                $item['#id'] = form_clean_id('edit-'. $parent_name . '-' . $row_index . '-' . $item_key );
                 if (isset($item['#process']) && !$item['#processed']) {
                   foreach ($item['#process'] as $process) {
                     if (function_exists($process)) {
@@ -202,6 +202,7 @@ function gridform_table_fillrow( $row, $vals, $row_index, $parent_name ){
             $replacements = array(  
                 '{%ROW_VAL_PLACEHOLDER%}' => $vals[$item_key] ? $vals[$item_key] : $vals[$it],
                 '{%ROW_IND_PLACEHOLDER%}' => $row_index,
+                '{%ROW-IND-PLACEHOLDER%}' => $row_index,
             );
             $out[] = strtr( $item, $replacements);
         }
@@ -250,6 +251,7 @@ function theme_tablegrid(  $element ){
             if ( in_array( $item['#type'], array( 'textfield', 'textarea', 'hidden', 'token' ) ) ) {
                 $item['#value'] = '{%ROW_VAL_PLACEHOLDER%}';
                 $item['#name'] = $element['#name'] . '[{%ROW_IND_PLACEHOLDER%}][' . $item_key . ']';
+                $item['#id'] = form_clean_id('edit-'. $element['#name'] . '-{%ROW_IND_PLACEHOLDER%}-' . $item_key );
                 $def_row[$item_key] = drupal_render( $item );
             }else{ //For other types - delay html code generation
                 $def_row[$item_key] = $item;
