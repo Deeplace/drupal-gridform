@@ -177,7 +177,7 @@ function theme_grid(  $element ){
 }
 
 
-function gridform_table_fillrow( $row, $vals, $row_index, $parent_name ){
+function gridform_table_fillrow( $row, $vals, $row_index, $parent_name, $attributes = array() ){
     $out = array(  );
     $it = 0;
     foreach ( $row as $item_key=>$item ) {
@@ -194,6 +194,14 @@ function gridform_table_fillrow( $row, $vals, $row_index, $parent_name ){
                     }
                   }
                   $item['#processed'] = TRUE;
+                }
+                if ($attributes) {
+                	if (is_array($item['#attributes'])) {
+						$item['#attributes'] = array_merge( $item['#attributes'], $attributes);                		
+                	}else {
+                		$item['#attributes'] = $attributes;
+                	}
+                	
                 }
                 /* Now we are ready to render form element */
                 $out[] = drupal_render( $item );
@@ -281,7 +289,7 @@ function theme_tablegrid(  $element ){
    }
     
     //Add one default_row for add new row function
-    $row = gridform_table_fillrow( $def_row, $def_row_val, $row_ind++, $element['#name'] );
+    $row = gridform_table_fillrow( $def_row, $def_row_val, $row_ind++, $element['#name'], array('disabled'=>TRUE) );
     array_unshift( $row, '<input type="checkbox" class="grid_select_check" />' ); //add controls
     $rows[] = array( 'data'=>$row, 'class'=>'tablegrid_default_new_row');
 
