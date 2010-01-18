@@ -273,6 +273,15 @@ function theme_tablegrid(  $element ){
   }
 
   $row_ind = 0;
+  if (isset($element['#value']) && is_array($element['#value'])) {
+		foreach ($element['#value'] as $value_row) {
+			$row = gridform_table_fillrow($def_row, $value_row, $row_ind++, $element['#name']);
+			//add controls
+			array_unshift($row, '<input type="checkbox" class="grid_select_check" />');
+			$rows[] = $row;
+		}
+	}
+	else {
   if ( is_array( $element['#default_value']) ) {
     foreach ( $element['#default_value'] as $value_row) {
         $row = gridform_table_fillrow( $def_row, $value_row, $row_ind++, $element['#name'] );
@@ -286,6 +295,7 @@ function theme_tablegrid(  $element ){
         $row = gridform_table_fillrow( $def_row, $def_row_val, $row_ind++, $element['#name'] );
         array_unshift( $row, '<input type="checkbox" class="grid_select_check" />' ); //add controls
         $rows[] = $row;
+   }
    }
     
     //Add one default_row for add new row function
