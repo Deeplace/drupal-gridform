@@ -6,15 +6,15 @@
 function gridform_elements() {
   $type['grid'] = array( 
        '#input' => TRUE,
-       '#header' => NULL,
-       '#default_value' => NULL,
-       '#row_count' => NULL,
+       '#layout' => 'vertical',
        '#process' => array('gridform_grid_expand'),
     );
   $type['tablegrid'] = array( 
        '#input' => TRUE,
-       '#layout' => 'vertical',
        '#process' => array('gridform_table_expand'),
+       '#default_value' => NULL,
+       '#row_count' => NULL,
+       '#header' => NULL,
     );
   return $type;
 }
