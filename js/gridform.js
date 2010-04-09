@@ -13,6 +13,21 @@ var renumber_grid_elements_current = 0;
 function renumber_grid_elements(tbody){
 	tbody.find("tr").each(function(i){
 		renumber_grid_elements_current = i;
+		$(this).find("div.form-item").each( function() {
+			input = $( this )
+			
+			input_id = input.attr( 'id' );
+			if (!input_id) {
+				return;
+			}
+			
+			var reg_id = new RegExp("", "i");
+			reg_id.compile("-\\d+-", "i");
+			new_input_id = input_id.replace( reg_id, '-' + renumber_grid_elements_current + '-');
+			if (new_input_id && new_input_id!=input_id) {
+				input.attr( 'id', new_input_id);
+			}
+		});
 		$(this).find(":input").each( function() {
 			input = $( this )
 			name = input.attr( 'name' );
