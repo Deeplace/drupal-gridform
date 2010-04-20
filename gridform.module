@@ -249,10 +249,10 @@ function theme_tablegrid(  $element ){
             unset( $item['#title'], $item['#description'] );
 
             //Fill array with default values
-            if ( $item['#default_value'] ) {
+            if ( isset( $item['#default_value'] )  ) {
                 $def_row_val[] = $item['#default_value'];
-            }elseif ( $item['$value'] ){
-                $def_row_val[] = $item['value'];
+            }elseif ( isset( $item['#value']) ){
+                $def_row_val[] = $item['#value'];
             }else {
                 $def_row_val[] = 0;
             }
