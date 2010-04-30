@@ -307,9 +307,12 @@ function theme_tablegrid(  $element ){
 /*  if (!empty($element['#description'])) {
     $output .= ' <div class="description">'. $element['#description'] ."</div>\n";
   }*/
+
   $output .= theme_table($header, $rows, $element['#attributes'], $element['#title']);
-  $output .= '<button onclick="return forms_add_row( this );">' . t( 'Add row' ) . '</button>';
-  $output .= '<button onclick="return forms_del_row( this );">' . t( 'Remove checked rows' ) . '</button>';
+  if ( !$element['#attributes']['readonly'] ) {
+      $output .= '<button onclick="return forms_add_row( this );">' . t( 'Add row' ) . '</button>';
+      $output .= '<button onclick="return forms_del_row( this );">' . t( 'Remove checked rows' ) . '</button>';
+  }
 
   return theme('form_element', $element, $output) ;
 }
