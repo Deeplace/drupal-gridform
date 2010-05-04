@@ -259,6 +259,11 @@ function theme_tablegrid(  $element ){
 
             unset( $item['#printed'], $item['#value']);
             
+            
+            if ( $element['#attributes']['readonly'] ) {
+                $item['#attributes'] = array('readonly'=>$element['#attributes']['readonly']);
+            }
+
             //for simple form elements - generate formated stubs with placeholders
             if ( in_array( $item['#type'], array( 'textfield', 'textarea', 'hidden', 'token' ) ) ) {
                 $item['#value'] = '{%ROW_VAL_PLACEHOLDER%}';
