@@ -34,7 +34,8 @@ function renumber_grid_elements(tbody){
 			if (!name) {
 				return;
 			}
-			name_parts = name.match( /^(.*)\[(\d+)\]\[([^\]]+)\]$/  );
+			//name_parts = name.match( /^(.*)\[(\d+)\]\[([^\]]+)\]$/  );
+			name_parts = name.match( /^(.*)\[(\d+)\](.*)$/  );
 			if (!name_parts) {
 				return;
 			}
