@@ -15,8 +15,22 @@ function gridform_elements() {
        '#default_value' => NULL,
        '#row_count' => NULL,
        '#header' => NULL,
+       '#element_validate' => array('tablegrid_validate'),
     );
   return $type;
+}
+
+/**
+ * Implementation of hook_validate().
+ */
+function tablegrid_validate( $element, &$form_state ){
+  $filters = array();
+
+  if ( empty( $element['#value']) && $element['required'] ) {
+      form_set_error($element['#name'], t( 'Fill at least one row'));
+  }
+
+  return $element;
 }
 
 /**
@@ -336,6 +350,14 @@ function form_type_tablegrid_value($element, $edit = FALSE) {
         }
     }
 
+    //Filter out empty ("zerro-ed") rows
+
+    foreach($edit as $row_ind=>$row){
+        if (!count(array_filter($row))) {
+            unset($edit[$row_ind]);
+        }
+    }
+    
     if ( $complete_parse ) {
         $row_count = count( $edit );
         $out = array(  );
@@ -386,5 +408,3 @@ function form_type_tablegrid_value($element, $edit = FALSE) {
 
     return $edit;
 }
-
-
