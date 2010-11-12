@@ -352,15 +352,17 @@ function form_type_tablegrid_value($element, $edit = FALSE) {
 
     //Filter out empty ("zerro-ed") rows
 
-    foreach($edit as $row_ind=>$row){
-        if (!count(array_filter($row))) {
-            unset($edit[$row_ind]);
+    if (is_array($edit)) {
+        foreach($edit as $row_ind=>$row){
+            if (!count(array_filter($row))) {
+                unset($edit[$row_ind]);
+            }
         }
     }
     
     if ( $complete_parse ) {
-        $row_count = count( $edit );
-        $out = array(  );
+        $row_count = count($edit);
+        $out = array();
         $parent_name = end( $element['#parents'] );
 
         //Run form_type_hook_value on each tablegrid element
