@@ -30,13 +30,15 @@ function tablegrid_validate( $element, &$form_state ){
       form_set_error($element['#name'], t( 'Fill at least one row'));
   }
   
-  $children = element_children($element);
-  foreach($element['#value'] as $row_ind=>$row){
-    foreach ($children as $child){
-        if ($element[$child]['#required'] && (empty($row[$child]) || !count($row[$child]) || (is_string($row[$child]) && strlen(trim($row[$child])) == 0))) {
-            form_set_error($element['#name'], t( 'Field @fieldname in row @rownum is required', array('@fieldname'=>$element[$child]['#title'], '@rownum'=>$row_ind+1)));
+  if (is_array($element['#value'])) {
+      $children = element_children($element);
+      foreach($element['#value'] as $row_ind=>$row){
+        foreach ($children as $child){
+            if ($element[$child]['#required'] && (empty($row[$child]) || !count($row[$child]) || (is_string($row[$child]) && strlen(trim($row[$child])) == 0))) {
+                form_set_error($element['#name'], t( 'Field @fieldname in row @rownum is required', array('@fieldname'=>$element[$child]['#title'], '@rownum'=>$row_ind+1)));
+            }
         }
-    }
+      }
   }
 
   return $element;
