@@ -1,9 +1,9 @@
 jQuery(function(){
 		//Auto set all tab indexes on form elements
-         $("tr.tablegrid_default_new_row").each( function( i ){
-                //make all inputs disabled
-                $( this ).hide(  ).find( ":input" ).attr( 'disabled', true );
-         });
+    $("tr.tablegrid_default_new_row").each( function(i){
+      //make all inputs disabled
+      $(this).hide().find(":input").attr( 'disabled', true );
+    });
 
     }
 );
@@ -34,7 +34,6 @@ function renumber_grid_elements(tbody){
 			if (!name) {
 				return;
 			}
-			//name_parts = name.match( /^(.*)\[(\d+)\]\[([^\]]+)\]$/  );
 			name_parts = name.match( /^(.*)\[(\d+)\]\[(.*)\]$/  );
 			if (!name_parts) {
 				return;
@@ -56,27 +55,58 @@ function renumber_grid_elements(tbody){
 }
 
 function forms_add_row( button ) {
-    $( button ).parent(  ).find( "tr.tablegrid_default_new_row" ).each( function(i){
-            row = $(this);
-            zebra_class = ( row.parent().find('tr').length % 2) ? 'odd' : 'even';
-            row.before( '<tr class="' + zebra_class + '">' + row.html( ) + '</tr>' );
-            row.prev(  ).find( ":input" ).removeAttr( 'disabled' );
-			renumber_grid_elements(row.parent());
+    $( button ).parent().find( "tr.tablegrid_default_new_row" ).each( function(i){
+        row = $(this);
+        zebra_class = ( row.parent().find('tr').length % 2) ? 'odd' : 'even';
+        row.before( '<tr class="' + zebra_class + '">' + row.html() + '</tr>' );
+        row.prev().find( ":input" ).removeAttr( 'disabled' );
+        renumber_grid_elements(row.parent());
         }
     );
     return false;
 }
 
 function forms_del_row( button ) {
-	jDIV = $( button ).parent();
-    jDIV.find( "input.grid_select_check:checkbox" ).each( 
-        function( i ) {
-			checkbox = $( this);
-			if ( checkbox.attr( 'checked' ) ) {
-				checkbox.parent().parent().remove();
-			}
+  jDIV = $( button ).parent();
+  jDIV.find( "input.grid_select_check:checkbox" ).each( 
+      function( i ) {
+        checkbox = $( this);
+        if ( checkbox.attr( 'checked' ) ) {
+          checkbox.parent().parent().remove();
         }
+      }
     );
-	renumber_grid_elements(jDIV.find("tbody"));
-    return false;
+  renumber_grid_elements(jDIV.find("tbody"));
+  return false;
+}
+
+/**
+ * Reset gridform data, set row count equal to data row count, and fills in data
+ *
+ * @param jQuery table
+ *  Gridform table reference
+ * @param object data
+ *  Data to fill with
+ */
+function forms_set_rows(table, data){
+  var tbody = table.children('tbody');
+  //del all rows
+  tbody.find('tr:not(.tablegrid_default_new_row)').remove();
+  var default_row = tbody.find('tr.tablegrid_default_new_row');
+  //add row for each data row
+  var ii = 0;
+  for (i in data) {
+    ii++;
+    var new_row = default_row.clone().show();
+    new_row.find(':input').removeAttr('disabled');
+    new_row.attr('class', ii%2 ? 'odd' : 'even');
+    //fill in values
+    var ji = 0;
+    for (j in data[i]) {
+      ji++;
+      new_row.find('td:eq('+ji+') :input').val(data[i][j]);
+    }
+    default_row.before(new_row);
+  }
+  renumber_grid_elements(tbody);
 }
