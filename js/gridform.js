@@ -11,7 +11,8 @@ jQuery(function(){
 var renumber_grid_elements_current = 0;
 		 
 function renumber_grid_elements(tbody){
-	tbody.find("tr").each(function(i){
+	var line_index = 0;
+    tbody.find("tr").each(function(i){
 		renumber_grid_elements_current = i;
 		$(this).find("div.form-item").each( function() {
 			input = $( this )
@@ -51,6 +52,10 @@ function renumber_grid_elements(tbody){
 				input.attr( 'id', new_input_id);
 			}
 		});
+
+      if($(this).find('.line-number').length > 0) {
+        $(this).find('.line-number').text(renumber_grid_elements_current + 1);
+      }
 	});
 }
 
