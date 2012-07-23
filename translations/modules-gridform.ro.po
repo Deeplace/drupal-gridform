@@ -1,0 +1,53 @@
+# $Id$
+#
+# Romanian translation of Drupal (general)
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+# Generated from files:
+#  gridform.module: n/a
+#  gridform.info: n/a
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2012-07-23 14:58+0300\n"
+"PO-Revision-Date: 2012-07-23 14:58+0300\n"
+"Last-Translator: NAME <EMAIL@ADDRESS>\n"
+"Language-Team: Romanian <EMAIL@ADDRESS>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=0; plural=;\n"
+
+#: gridform.module:31
+msgid "Fill at least one row"
+msgstr "Completați cel puțin un rînd"
+
+#: gridform.module:39
+msgid "Field @fieldname in row @rownum is required"
+msgstr "Cîmpul @fieldname din rîndul @rownum este obligatoriu"
+
+#: gridform.module:282
+msgid "Nr d/o"
+msgstr "Nr d/o"
+
+#: gridform.module:285
+msgid "op"
+msgstr "op"
+
+#: gridform.module:388
+msgid "Add row"
+msgstr "Adaugă un rînd"
+
+#: gridform.module:389
+msgid "Remove checked rows"
+msgstr "Elimină rîndurile selectate"
+
+#: gridform.info:0
+msgid "Grid form Element"
+msgstr "Element formă - Grid"
+
+#: gridform.info:0
+msgid "Defines new form element - Grid"
+msgstr "Definește un nou element al formei - Grid"
+
