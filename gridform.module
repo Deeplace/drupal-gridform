@@ -207,7 +207,7 @@ function gridform_table_fillrow( $row, $vals, $row_index, $parent_name, $attribu
     $it = 0;
     foreach ( $row as $item_key=>$item ) {
         if ( is_array( $item ) ) {
-                $item['#value'] = $vals[$item_key] ? $vals[$item_key] : $vals[$it];
+                $item['#value'] = isset($vals[$item_key]) ? $vals[$item_key] : $vals[$it];
                 $item['#name'] = $parent_name . "[$row_index][$item_key]";
                 $item['#parents'] = array( $parent_name, $row_index, $item_key );
                 
@@ -245,7 +245,7 @@ function gridform_table_fillrow( $row, $vals, $row_index, $parent_name, $attribu
         } else {
             //replace
             $replacements = array(  
-                '{%ROW_VAL_PLACEHOLDER%}' => $vals[$item_key] ? $vals[$item_key] : $vals[$it],
+                '{%ROW_VAL_PLACEHOLDER%}' => isset($vals[$item_key]) ? $vals[$item_key] : $vals[$it],
                 '{%ROW_IND_PLACEHOLDER%}' => $row_index,
                 '{%ROW-IND-PLACEHOLDER%}' => $row_index,
             );
@@ -262,8 +262,10 @@ function gridform_table_fillrow( $row, $vals, $row_index, $parent_name, $attribu
  *
  */
 function theme_tablegrid(  $element ){
-    $path = drupal_get_path( 'module', 'gridform' );
-    drupal_add_js( $path . '/js/gridform.js' ); 
+  $output = '';
+
+  $path = drupal_get_path( 'module', 'gridform' );
+  drupal_add_js( $path . '/js/gridform.js' ); 
 
     /* Do analysis
         #header empty -{ foreach children $header[] = $child['#title'] } :  $element['#header']
@@ -305,7 +307,7 @@ function theme_tablegrid(  $element ){
             unset( $item['#printed'], $item['#value']);
             
             
-            if ( $element['#attributes']['readonly'] ) {
+            if ( isset($element['#attributes']['readonly']) && $element['#attributes']['readonly'] ) {
                 $item['#attributes'] = array('readonly'=>$element['#attributes']['readonly']);
             }
 
@@ -384,7 +386,7 @@ function theme_tablegrid(  $element ){
   }*/
 
   $output .= theme_table($header, $rows, $element['#attributes'], $element['#title']);
-  if ( !$element['#attributes']['readonly'] ) {
+  if ( !isset($element['#attributes']['readonly']) || !$element['#attributes']['readonly'] ) {
       $output .= '<button class="add-row" onclick="return forms_add_row( this );">' . t( 'Add row' ) . '</button>';
       $output .= '<button class="del-row" onclick="return forms_del_row( this );">' . t( 'Remove checked rows' ) . '</button>';
   }
