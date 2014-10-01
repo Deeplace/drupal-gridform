@@ -141,7 +141,7 @@ function gridform_grid_expand($element) {
 
         }
     }
-    if ( $element['markup'] == 'horizontal' ) {
+    if ( array_key_exists('markup', $element) && $element['markup'] === 'horizontal' ) {
         $out['grid_sep_' . $el_iter] = $markups['rowend'];
     }
   return $out;
@@ -190,13 +190,14 @@ function theme_grid_innercell( $attributes = NULL ){
  *
  */
 function theme_grid(  $element ){
-  $rows = array(  );
+  $rows   = array();
+  $output = '';
 
   if (!empty($element['#description'])) {
     $output .= ' <div class="description">'. $element['#description'] ."</div>\n";
   }
 
- $output .= '<div ' . drupal_attributes($element['#attributes']) .'>'. ($element['#title'] ? '<h4>'. $element['#title'] .'</h4>' : '') . (!empty($element['#children']) ? '<table>' . $element['#children'] . '</table>' : '') . (isset($element['#value']) ? $element['#value'] : '') ."</div>\n";
+  $output .= '<div ' . drupal_attributes($element['#attributes']) .'>'. ($element['#title'] ? '<h4>'. $element['#title'] .'</h4>' : '') . (!empty($element['#children']) ? '<table>' . $element['#children'] . '</table>' : '') . (isset($element['#value']) ? $element['#value'] : '') ."</div>\n";
 
   return $output;
 }
