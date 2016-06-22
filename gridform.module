@@ -380,11 +380,7 @@ function theme_tablegrid(  $element ){
     array_unshift( $row, '<span class="line-number">' . $line_number . '</div>'); //add line numbers
   }
   array_unshift( $row, '<input type="checkbox" class="grid_select_check" />' ); //add controls
-  $rows[] = array( 'data'=>$row, 'class'=>'tablegrid_default_new_row');
-
-/*  if (!empty($element['#description'])) {
-    $output .= ' <div class="description">'. $element['#description'] ."</div>\n";
-  }*/
+  $rows[] = array( 'data'=>$row, 'class'=>'tablegrid_default_new_row', 'style' => 'display:none');
 
   $output .= theme_table($header, $rows, $element['#attributes'], $element['#title']);
   if ( !isset($element['#attributes']['readonly']) || !$element['#attributes']['readonly'] ) {
