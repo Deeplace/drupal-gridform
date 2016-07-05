@@ -211,9 +211,16 @@ function gridform_table_fillrow( $row, $vals, $row_index, $parent_name, $attribu
                 $item['#value'] = isset($vals[$item_key]) ? $vals[$item_key] : $vals[$it];
                 $item['#name'] = $parent_name . "[$row_index][$item_key]";
                 $item['#parents'] = array( $parent_name, $row_index, $item_key );
-                
+
                 /* And process form element if needed */
                 $item['#id'] = form_clean_id('edit-'. $parent_name . '-' . $row_index . '-' . $item_key );
+                if ($attributes) {
+                  if (is_array($item['#attributes'])) {
+                    $item['#attributes'] = array_merge( $item['#attributes'], $attributes);
+                  }else {
+                    $item['#attributes'] = $attributes;
+                  }
+                }
                 if (isset($item['#process']) && !$item['#processed']) {
                   foreach ($item['#process'] as $process) {
                     if (function_exists($process)) {
@@ -222,7 +229,7 @@ function gridform_table_fillrow( $row, $vals, $row_index, $parent_name, $attribu
                   }
                   $item['#processed'] = TRUE;
                 }
-                
+
                 //Build children #name element
                 foreach (element_children($item) as $child_key) {
                   $item[$child_key]['#parents'] = $item['#parents'];
@@ -233,19 +240,11 @@ function gridform_table_fillrow( $row, $vals, $row_index, $parent_name, $attribu
                 }
 
 
-                if ($attributes) {
-                	if (is_array($item['#attributes'])) {
-                    $item['#attributes'] = array_merge( $item['#attributes'], $attributes);
-                	}else {
-                		$item['#attributes'] = $attributes;
-                	}
-                	
-                }
                 /* Now we are ready to render form element */
                 $out[] = drupal_render( $item );
         } else {
             //replace
-            $replacements = array(  
+            $replacements = array(
                 '{%ROW_VAL_PLACEHOLDER%}' => isset($vals[$item_key]) ? $vals[$item_key] : $vals[$it],
                 '{%ROW_IND_PLACEHOLDER%}' => $row_index,
                 '{%ROW-IND-PLACEHOLDER%}' => $row_index,
@@ -313,7 +312,7 @@ function theme_tablegrid(  $element ){
             }
 
             //for simple form elements - generate formated stubs with placeholders
-            if ( in_array( $item['#type'], array( 'textfield', 'textarea', 'hidden', 'token' ) ) ) {
+            if ( in_array( $item['#type'], array( 'textarea', 'hidden', 'token' ) ) ) {
                 $item['#value'] = '{%ROW_VAL_PLACEHOLDER%}';
                 $item['#name'] = $element['#name'] . '[{%ROW_IND_PLACEHOLDER%}][' . $item_key . ']';
                 $item['#parents'] = array($element['#name'], '{%ROW_IND_PLACEHOLDER%}', $item_key );
