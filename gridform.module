@@ -337,7 +337,9 @@ function theme_tablegrid(  $element ){
               array_unshift( $row, '<span class="line-number">' . $line_number . '</span>'); //add line numbers
             }
 
-            array_unshift($row, '<input type="checkbox" class="grid_select_check" />');
+            if ($element['#mode'] != DOCUMENT_MODE_VIEW) {
+              array_unshift($row, '<input type="checkbox" class="grid_select_check" />');
+            }
 			$rows[] = $row;
 		}
 	}
@@ -368,7 +370,9 @@ function theme_tablegrid(  $element ){
         array_unshift( $row, '<span class="line-number">' . $line_number . '</span>'); //add line numbers
       }
 
-      array_unshift( $row, '<input type="checkbox" class="grid_select_check" />' ); //add controls
+      if ($element['#mode'] != DOCUMENT_MODE_VIEW) {
+        array_unshift($row, '<input type="checkbox" class="grid_select_check" />');
+      }
       $rows[] = $row;
     }
   }
@@ -378,7 +382,9 @@ function theme_tablegrid(  $element ){
   if(!empty($show_line_number)) {
     array_unshift( $row, '<span class="line-number">' . $line_number . '</div>'); //add line numbers
   }
-  array_unshift( $row, '<input type="checkbox" class="grid_select_check" />' ); //add controls
+  if ($element['#mode'] != DOCUMENT_MODE_VIEW) {
+    array_unshift($row, '<input type="checkbox" class="grid_select_check" />'); //add controls
+  }
   $rows[] = array( 'data'=>$row, 'class'=>'tablegrid_default_new_row', 'style' => 'display:none');
 
   $output .= theme_table($header, $rows, $element['#attributes'], $element['#title']);
