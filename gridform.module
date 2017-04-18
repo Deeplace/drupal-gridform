@@ -336,7 +336,6 @@ function theme_tablegrid(  $element ){
               $line_number++;
               array_unshift( $row, '<span class="line-number">' . $line_number . '</span>'); //add line numbers
             }
-
             if (!isset($element['#attributes']['readonly']) || !$element['#attributes']['readonly']) {
               array_unshift($row, '<input type="checkbox" class="grid_select_check" />');
             }
@@ -345,19 +344,18 @@ function theme_tablegrid(  $element ){
 	}
 	else {
     if ( is_array( $element['#default_value']) ) {
-      foreach ( $element['#default_value'] as $value_row) {
-          $row = gridform_table_fillrow( $def_row, $value_row, $row_ind++, $element['#name'] );
+        foreach ( $element['#default_value'] as $value_row) {
+            $row = gridform_table_fillrow( $def_row, $value_row, $row_ind++, $element['#name'] );
 
-          if(!empty($show_line_number)) {
-            $line_number++;
-            array_unshift( $row, '<span class="line-number">' . $line_number . '</span>'); //add line numbers
-          }
-          if (!isset($element['#attributes']['readonly']) || !$element['#attributes']['readonly']) {
-            array_unshift($row, '<input type="checkbox" class="grid_select_check" />');
-          }
-          //array_unshift( $row, '<input type="checkbox" class="grid_select_check" />' ); //add controls
-          $rows[] = $row;
-      }
+            if(!empty($show_line_number)) {
+              $line_number++;
+              array_unshift( $row, '<span class="line-number">' . $line_number . '</span>'); //add line numbers
+            }
+            if (!isset($element['#attributes']['readonly']) || !$element['#attributes']['readonly']) {
+              array_unshift($row, '<input type="checkbox" class="grid_select_check" />');
+            }
+            $rows[] = $row;
+        }
     }
 
   }
@@ -371,7 +369,6 @@ function theme_tablegrid(  $element ){
         $line_number++;
         array_unshift( $row, '<span class="line-number">' . $line_number . '</span>'); //add line numbers
       }
-
       if (!isset($element['#attributes']['readonly']) || !$element['#attributes']['readonly']) {
         array_unshift($row, '<input type="checkbox" class="grid_select_check" />');
       }
