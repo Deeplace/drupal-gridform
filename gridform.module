@@ -1,45 +1,52 @@
 <?php
 
-/*
- * Implementation of hook_elements(  )
-*/
+/**
+ * @file
+ * Grid like form elements for Drupal Form API.
+ */
+
+/**
+ * Implements hook_elements().
+ */
 function gridform_elements() {
-  $type['grid'] = array( 
-       '#input' => TRUE,
-       '#layout' => 'vertical',
-       '#process' => array('gridform_grid_expand'),
-    );
-  $type['tablegrid'] = array( 
-       '#input' => TRUE,
-       '#process' => array('gridform_table_expand'),
-       '#default_value' => NULL,
-       '#row_count' => NULL,
-       '#header' => NULL,
-       '#element_validate' => array('tablegrid_validate'),
-       '#show_line_numbers' => FALSE
-    );
+  $type['grid'] = array(
+    '#input' => TRUE,
+    '#layout' => 'vertical',
+    '#process' => array('gridform_grid_expand'),
+  );
+  $type['tablegrid'] = array(
+    '#input' => TRUE,
+    '#process' => array('gridform_table_expand'),
+    '#default_value' => NULL,
+    '#row_count' => NULL,
+    '#header' => NULL,
+    '#element_validate' => array('tablegrid_validate'),
+    '#show_line_numbers' => FALSE,
+  );
   return $type;
 }
 
 /**
- * Implementation of hook_validate().
+ * Implements hook_validate().
  */
-function tablegrid_validate( $element, &$form_state ){
-  $filters = array();
-
-  if ( empty( $element['#value']) && $element['required'] ) {
-      form_set_error($element['#name'], t( 'Fill at least one row'));
+function tablegrid_validate($element, &$form_state) {
+  if (empty($element['#value']) && $element['required']) {
+    form_set_error($element['#name'], t('Fill at least one row'));
   }
-  
+
   if (is_array($element['#value'])) {
-      $children = element_children($element);
-      foreach($element['#value'] as $row_ind=>$row){
-        foreach ($children as $child){
-            if ($element[$child]['#required'] && (empty($row[$child]) || !count($row[$child]) || (is_string($row[$child]) && strlen(trim($row[$child])) == 0))) {
-                form_set_error($element['#name'], t( 'Field @fieldname in row @rownum is required', array('@fieldname'=>$element[$child]['#title'], '@rownum'=>$row_ind+1)));
-            }
+    $children = element_children($element);
+    foreach ($element['#value'] as $row_ind => $row) {
+      foreach ($children as $child) {
+        if ($element[$child]['#required'] && (empty($row[$child]) || !count($row[$child]) || (is_string($row[$child]) && strlen(trim($row[$child])) == 0))) {
+          form_set_error($element['#name'],
+            t('Field @fieldname in row @rownum is required', array(
+              '@fieldname' => $element[$child]['#title'],
+              '@rownum' => $row_ind + 1,
+            )));
         }
       }
+    }
   }
 
   return $element;
@@ -49,122 +56,129 @@ function tablegrid_validate( $element, &$form_state ){
  * Our process callback to expand the table control.
  */
 function gridform_table_expand($element) {
-    $element['#tree'] = TRUE;
-    foreach( element_children( $element ) as $key ){
-        $element[$key]['#input'] = FALSE;
-        /* Grab form element info*/
-        if ((!empty($element[$key]['#type'])) && ($info = _element_info($element[$key]['#type']))) {
-            // Overlay $info onto $form, retaining preexisting keys in $form.
-            $element[$key] += $info;
-        }
+  $element['#tree'] = TRUE;
+  foreach (element_children($element) as $key) {
+    $element[$key]['#input'] = FALSE;
+    // Grab form element info.
+    if ((!empty($element[$key]['#type'])) && ($info = _element_info($element[$key]['#type']))) {
+      // Overlay $info onto $form, retaining preexisting keys in $form.
+      $element[$key] += $info;
     }
-    return $element;
+  }
+  return $element;
 }
 
 /**
  * Our process callback to expand the grid control.
  */
 function gridform_grid_expand($element) {
-    $markups = array( 
-        'rowstart' => array( '#type'=>'markup', '#value'=>theme( 'grid_rowstart' ) ),
-        'rowend' => array( '#type'=>'markup', '#value'=>theme( 'grid_rowend' ) ),
-        'innercell' => array( '#type'=>'markup', '#value'=>theme( 'grid_innercell' ) ),
-    );
+  $markups = array(
+    'rowstart' => array('#type' => 'markup', '#value' => theme('grid_rowstart')),
+    'rowend' => array('#type' => 'markup', '#value' => theme('grid_rowend')),
+    'innercell' => array('#type' => 'markup', '#value' => theme('grid_innercell')),
+  );
 
-    $out = array( );
-    $el_iter = 0;
-    $max_colls = 1;
-    foreach ( $element as $sub_key=>$sub_val ) {
-        //Just copy all params
-        if ( element_property($sub_key) || !is_array( $sub_val )) {
-            $out[$sub_key] = $sub_val; 
-        }else {
-            //If double arr - bidimensional array
-            if ( $children = element_children( $sub_val ) && !array_key_exists( '#type', $sub_val )) {
-                $children_count = sizeof( $children );
-                $out_sub_val = array( );
-                $el2_iter = 0;
-                foreach( $sub_val as $sub2_key=>$sub2_val ) {
-                    if ( element_property($sub_key) || !is_array( $sub_val )) {
-                        $out_sub_val[$sub2_key] = $sub2_val; 
-                    }else {
-                        if ( !$el2_iter ) {
-                            $out_sub_val['grid_sep2_' . $el2_iter] = $markups['rowstart'];
-                        }else {
-                            $out_sub_val['grid_sep2_' . $el2_iter] = $markups['innercell'];
-                        }
-                        $el2_iter++;
-                        $out_sub_val[$sub2_key] = $sub2_val;
-                    }
-                }
-                $max_colls = max( $el2_iter, $max_colls );
-                $out_sub_val['grid_sep2_' . $el2_iter] = $markups['rowend'];
-                $out[$sub_key] = $out_sub_val;
-            } elseif (  $element['#layout']=='horizontal' ) { //Horizontal simple layout, if set explicit
-                if ( !$el_iter ) {
-                    $out['grid_sep_' . $el_iter] = $markups['rowstart'];
-                }else {
-                    $out['grid_sep_' . $el_iter] = $markups['innercell'];
-                }
-                $out[$sub_key] = $sub_val;
-                $el_iter++;
-            } else { //Vertical implicit layout
-                $out['grid_sep_' . $el_iter] = $max_colls > 1 ? array( 
-                                '#type'=>'markup', 
-                                '#value'=>theme( 'grid_rowstart', array( 'colspan'=>$max_colls ) )
-                            ) :
-                                $markups['rowstart'];
-                $out[$sub_key] = $sub_val;
-                $el_iter++;
-                $out['grid_sep_' . $el_iter] = $markups['rowend'];
+  $out = array();
+  $el_iter = 0;
+  $max_colls = 1;
+  foreach ($element as $sub_key => $sub_val) {
+    // Just copy all params.
+    if (element_property($sub_key) || !is_array($sub_val)) {
+      $out[$sub_key] = $sub_val;
+    }
+    else {
+      // If double arr - bidimensional array.
+      if (element_children($sub_val) && !array_key_exists('#type', $sub_val)) {
+        $out_sub_val = array();
+        $el2_iter = 0;
+        foreach ($sub_val as $sub2_key => $sub2_val) {
+          if (element_property($sub_key) || !is_array($sub_val)) {
+            $out_sub_val[$sub2_key] = $sub2_val;
+          }
+          else {
+            if (!$el2_iter) {
+              $out_sub_val['grid_sep2_' . $el2_iter] = $markups['rowstart'];
             }
-
-            /* analize sub_val
-             if double arr
-                     push row start . 
-                                        expand_one_row(  )  {
-                                                while
-                                                push cell start . 2nd level inner_el . cell end
-                                        }
-                                       . row_end
-             
-             if single arr and vertical
-                    push row_start . cell start . element . cell end . row end
-             if single arr and horizontal 
-                    if ( first )
-                        push row-start . cell start . el
-                    if last 
-                        push el. cell end . row_end
-                     else 
-                        cell_end, cell_start . el
-                    */
-
+            else {
+              $out_sub_val['grid_sep2_' . $el2_iter] = $markups['innercell'];
+            }
+            $el2_iter++;
+            $out_sub_val[$sub2_key] = $sub2_val;
+          }
         }
-    }
-    if ( array_key_exists('markup', $element) && $element['markup'] === 'horizontal' ) {
+        $max_colls = max($el2_iter, $max_colls);
+        $out_sub_val['grid_sep2_' . $el2_iter] = $markups['rowend'];
+        $out[$sub_key] = $out_sub_val;
+      }
+      // Horizontal simple layout, if set explicit.
+      elseif ($element['#layout'] == 'horizontal') {
+        if (!$el_iter) {
+          $out['grid_sep_' . $el_iter] = $markups['rowstart'];
+        }
+        else {
+          $out['grid_sep_' . $el_iter] = $markups['innercell'];
+        }
+        $out[$sub_key] = $sub_val;
+        $el_iter++;
+      }
+      // Vertical implicit layout.
+      else {
+        $out['grid_sep_' . $el_iter] = $max_colls > 1 ? array(
+          '#type' => 'markup',
+          '#value' => theme('grid_rowstart', array('colspan' => $max_colls)),
+        ) :
+              $markups['rowstart'];
+        $out[$sub_key] = $sub_val;
+        $el_iter++;
         $out['grid_sep_' . $el_iter] = $markups['rowend'];
+      }
+
+      /*
+       * analize sub_val
+       * if double arr
+       * push row start .
+       * expand_one_row(  )  {
+       * while
+       * push cell start . 2nd level inner_el . cell end
+       * }
+       * . row_end
+       *        * if single arr and vertical
+       * push row_start . cell start . element . cell end . row end
+       * if single arr and horizontal
+       * if ( first )
+       * push row-start . cell start . el
+       * if last
+       * push el. cell end . row_end
+       * else
+       * cell_end, cell_start . el
+       */
+
     }
+  }
+  if (array_key_exists('markup', $element) && $element['markup'] === 'horizontal') {
+    $out['grid_sep_' . $el_iter] = $markups['rowend'];
+  }
   return $out;
 }
 
 /**
- * Implementation of hook_theme().
- * 
+ * Implements hook_theme().
+ *
  * This lets us tell Drupal about our theme functions and their arguments.
  */
-function gridform_theme(  ){
+function gridform_theme() {
   return array(
     'grid' => array(
       'arguments' => array('element'),
     ),
     'grid_rowstart' => array(
-      'arguments' => array( 'attributes'=>NULL),
+      'arguments' => array('attributes' => NULL),
     ),
     'grid_rowend' => array(
       'arguments' => array(),
     ),
     'grid_innercell' => array(
-      'arguments' => array('attributes'=>NULL),
+      'arguments' => array('attributes' => NULL),
     ),
     'tablegrid' => array(
       'arguments' => array('element'),
@@ -172,202 +186,190 @@ function gridform_theme(  ){
   );
 }
 
-function theme_grid_rowstart( $attributes = NULL ){
-    return '<tr><td '. drupal_attributes($attributes) . '>';
+/**
+ * Theme function for row start.
+ */
+function theme_grid_rowstart($attributes = NULL) {
+  return '<tr><td ' . drupal_attributes($attributes) . '>';
 }
 
-function theme_grid_rowend(  ){
-    return '</td></tr>';
+/**
+ * Theme function for row end.
+ */
+function theme_grid_rowend() {
+  return '</td></tr>';
 }
 
-function theme_grid_innercell( $attributes = NULL ){
-    return '</td><td '. drupal_attributes($attributes) . '>';
+/**
+ * Theme function for cell space.
+ */
+function theme_grid_innercell($attributes = NULL) {
+  return '</td><td ' . drupal_attributes($attributes) . '>';
 }
-
 
 /**
  * Theme function to format the output of grid form element type.
- *
  */
-function theme_grid(  $element ){
-  $rows   = array();
+function theme_grid($element) {
   $output = '';
 
   if (!empty($element['#description'])) {
-    $output .= ' <div class="description">'. $element['#description'] ."</div>\n";
+    $output .= ' <div class="description">' . $element['#description'] . "</div>\n";
   }
 
-  $output .= '<div ' . drupal_attributes($element['#attributes']) .'>'. ($element['#title'] ? '<h4>'. $element['#title'] .'</h4>' : '') . (!empty($element['#children']) ? '<table>' . $element['#children'] . '</table>' : '') . (isset($element['#value']) ? $element['#value'] : '') ."</div>\n";
+  $output .= '<div ' . drupal_attributes($element['#attributes']) . '>' . ($element['#title'] ? '<h4>' . $element['#title'] . '</h4>' : '') . (!empty($element['#children']) ? '<table>' . $element['#children'] . '</table>' : '') . (isset($element['#value']) ? $element['#value'] : '') . "</div>\n";
 
   return $output;
 }
 
+/**
+ * Fill grid row with values.
+ */
+function gridform_table_fillrow($row, $vals, $row_index, $parent_name, $attributes = array()) {
+  $out = array();
+  $it = 0;
+  foreach ($row as $item_key => $item) {
+    if (is_array($item)) {
+      $item['#value'] = isset($vals[$item_key]) ? $vals[$item_key] : $vals[$it];
+      $item['#name'] = $parent_name . "[$row_index][$item_key]";
+      $item['#parents'] = array($parent_name, $row_index, $item_key);
 
-function gridform_table_fillrow( $row, $vals, $row_index, $parent_name, $attributes = array() ){
-    $out = array(  );
-    $it = 0;
-    foreach ( $row as $item_key=>$item ) {
-        if ( is_array( $item ) ) {
-                $item['#value'] = isset($vals[$item_key]) ? $vals[$item_key] : $vals[$it];
-                $item['#name'] = $parent_name . "[$row_index][$item_key]";
-                $item['#parents'] = array( $parent_name, $row_index, $item_key );
-
-                /* And process form element if needed */
-                $item['#id'] = form_clean_id('edit-'. $parent_name . '-' . $row_index . '-' . $item_key );
-                if ($attributes) {
-                  if (is_array($item['#attributes'])) {
-                    $item['#attributes'] = array_merge( $item['#attributes'], $attributes);
-                  }else {
-                    $item['#attributes'] = $attributes;
-                  }
-                }
-                if (isset($item['#process']) && !$item['#processed']) {
-                  foreach ($item['#process'] as $process) {
-                    if (function_exists($process)) {
-                      $item = $process($item,NULL, $form_state, $complete_form);
-                    }
-                  }
-                  $item['#processed'] = TRUE;
-                }
-
-                //Build children #name element
-                foreach (element_children($item) as $child_key) {
-                  $item[$child_key]['#parents'] = $item['#parents'];
-                  $item[$child_key]['#parents'][] = $child_key;
-                  $parent_name = array_shift($item[$child_key]['#parents']);
-                  $item[$child_key]['#name'] = $parent_name . '['. implode('][', $item[$child_key]['#parents']) .']';
-                  array_unshift($item[$child_key]['#parents'], $parent_name);
-                }
-
-
-                /* Now we are ready to render form element */
-                $out[] = drupal_render( $item );
-        } else {
-            //replace
-            $replacements = array(
-                '{%ROW_VAL_PLACEHOLDER%}' => isset($vals[$item_key]) ? $vals[$item_key] : $vals[$it],
-                '{%ROW_IND_PLACEHOLDER%}' => $row_index,
-                '{%ROW-IND-PLACEHOLDER%}' => $row_index,
-            );
-            $out[] = strtr( $item, $replacements);
+      /* And process form element if needed */
+      $item['#id'] = form_clean_id('edit-' . $parent_name . '-' . $row_index . '-' . $item_key);
+      if ($attributes) {
+        if (is_array($item['#attributes'])) {
+          $item['#attributes'] = array_merge($item['#attributes'], $attributes);
         }
+        else {
+          $item['#attributes'] = $attributes;
+        }
+      }
+      if (isset($item['#process']) && !$item['#processed']) {
+        foreach ($item['#process'] as $process) {
+          if (function_exists($process)) {
+            $form_state = array();
+            $complete_form = array();
+            $item = $process($item, NULL, $form_state, $complete_form);
+          }
+        }
+        $item['#processed'] = TRUE;
+      }
 
-        $it++;
+      // Build children #name element.
+      foreach (element_children($item) as $child_key) {
+        $item[$child_key]['#parents'] = $item['#parents'];
+        $item[$child_key]['#parents'][] = $child_key;
+        $parent_name = array_shift($item[$child_key]['#parents']);
+        $item[$child_key]['#name'] = $parent_name . '[' . implode('][', $item[$child_key]['#parents']) . ']';
+        array_unshift($item[$child_key]['#parents'], $parent_name);
+      }
+
+      /* Now we are ready to render form element */
+      $out[] = drupal_render($item);
     }
-    return $out;
+    else {
+      // Replace.
+      $replacements = array(
+        '{%ROW_VAL_PLACEHOLDER%}' => isset($vals[$item_key]) ? $vals[$item_key] : $vals[$it],
+        '{%ROW_IND_PLACEHOLDER%}' => $row_index,
+        '{%ROW-IND-PLACEHOLDER%}' => $row_index,
+      );
+      $out[] = strtr($item, $replacements);
+    }
+
+    $it++;
+  }
+  return $out;
 }
 
 /**
  * Theme function to format the output of tablegrid form element type.
- *
  */
-function theme_tablegrid(  $element ){
+function theme_tablegrid($element) {
   $output = '';
 
-  $path = drupal_get_path( 'module', 'gridform' );
-  drupal_add_js( $path . '/js/gridform.js' ); 
+  $path = drupal_get_path('module', 'gridform');
+  drupal_add_js($path . '/js/gridform.js');
 
-    /* Do analysis
-        #header empty -{ foreach children $header[] = $child['#title'] } :  $element['#header']
-        foreach ( $values ) $rows[] = $def_row fill with value
-        while ( $min_rows - count( $element['#values']) ) - $rows[] = $row with def values
-    */
+  /*
+   * Do analysis
+   * #header empty -
+   *   { foreach children $header[] = $child['#title'] } :  $element['#header']
+   * foreach ( $values )
+   *   $rows[] = $def_row fill with value
+   * while ( $min_rows - count( $element['#values']) )
+   *   $rows[] = $row with def values
+   */
 
-  $header = $rows = $def_row = $def_row_val = array(  );
-  if ( isset( $element['#header'] ) && is_array( $element['#header'] )) {
+  $header = $rows = $def_row = $def_row_val = array();
+  if (isset($element['#header']) && is_array($element['#header'])) {
     $header = $element['#header'];
   }
 
   $show_line_number = FALSE;
-  if(!empty($element['#show_line_numbers'])) {
+  if (!empty($element['#show_line_numbers'])) {
     $show_line_number = TRUE;
-    array_unshift( $header, t( 'Nr d/o' ) );
+    array_unshift($header, t('Nr d/o'));
   }
 
-  array_unshift( $header, t( 'op' ) );
-  
-  foreach ( element_children( $element ) as $item_key ) {
-        $item = $element[$item_key];
-        
-        if ( is_array( $item ) ) {
-            if ( !isset( $element['#header'] ) || !is_array( $element['#header'] )) {
-                $header[] = $item['#title'];
-            }
-            unset( $item['#title'], $item['#description'] );
+  array_unshift($header, t('op'));
 
-            //Fill array with default values
-            if ( isset( $item['#default_value'] )  ) {
-                $def_row_val[] = $item['#default_value'];
-            }elseif ( isset( $item['#value']) ){
-                $def_row_val[] = $item['#value'];
-            }else {
-                $def_row_val[] = 0;
-            }
+  foreach (element_children($element) as $item_key) {
+    $item = $element[$item_key];
 
-            unset( $item['#printed'], $item['#value']);
-            
-            
-            if ( isset($element['#attributes']['readonly']) && $element['#attributes']['readonly'] ) {
-                $item['#attributes'] = array('readonly'=>$element['#attributes']['readonly']);
-            }
+    if (is_array($item)) {
+      if (!isset($element['#header']) || !is_array($element['#header'])) {
+        $header[] = $item['#title'];
+      }
+      unset($item['#title'], $item['#description']);
 
-            //for simple form elements - generate formated stubs with placeholders
-            if ( in_array( $item['#type'], array( 'textarea', 'hidden', 'token' ) ) ) {
-                $item['#value'] = '{%ROW_VAL_PLACEHOLDER%}';
-                $item['#name'] = $element['#name'] . '[{%ROW_IND_PLACEHOLDER%}][' . $item_key . ']';
-                $item['#parents'] = array($element['#name'], '{%ROW_IND_PLACEHOLDER%}', $item_key );
-                $item['#id'] = form_clean_id('edit-'. $element['#name'] . '-{%ROW_IND_PLACEHOLDER%}-' . $item_key );
-                $def_row[$item_key] = drupal_render( $item );
-            }else{ //For other types - delay html code generation
-                $def_row[$item_key] = $item;
-            }
+      // Fill array with default values.
+      if (isset($item['#default_value'])) {
+        $def_row_val[] = $item['#default_value'];
+      }
+      elseif (isset($item['#value'])) {
+        $def_row_val[] = $item['#value'];
+      }
+      else {
+        $def_row_val[] = 0;
+      }
 
-        }
+      unset($item['#printed'], $item['#value']);
+
+      if (isset($element['#attributes']['readonly']) && $element['#attributes']['readonly']) {
+        $item['#attributes'] = array('readonly' => $element['#attributes']['readonly']);
+      }
+
+      // For simple form elements - generate formated stubs with placeholders.
+      if (in_array($item['#type'], array('textarea', 'hidden', 'token'))) {
+        $item['#value'] = '{%ROW_VAL_PLACEHOLDER%}';
+        $item['#name'] = $element['#name'] . '[{%ROW_IND_PLACEHOLDER%}][' . $item_key . ']';
+        $item['#parents'] = array(
+          $element['#name'],
+          '{%ROW_IND_PLACEHOLDER%}',
+          $item_key,
+        );
+        $item['#id'] = form_clean_id('edit-' . $element['#name'] . '-{%ROW_IND_PLACEHOLDER%}-' . $item_key);
+        $def_row[$item_key] = drupal_render($item);
+      }
+      // For other types - delay html code generation.
+      else {
+        $def_row[$item_key] = $item;
+      }
+
+    }
   }
 
   $row_ind = 0;
   $line_number = 0;
   if (isset($element['#value']) && is_array($element['#value'])) {
-		foreach ($element['#value'] as $value_row) {
-			$row = gridform_table_fillrow($def_row, $value_row, $row_ind++, $element['#name']);
-			//add controls
-
-            if(!empty($show_line_number)) {
-              $line_number++;
-              array_unshift( $row, '<span class="line-number">' . $line_number . '</span>'); //add line numbers
-            }
-            if (!isset($element['#attributes']['readonly']) || !$element['#attributes']['readonly']) {
-              array_unshift($row, '<input type="checkbox" class="grid_select_check" />');
-            }
-			$rows[] = $row;
-		}
-	}
-	else {
-    if ( is_array( $element['#default_value']) ) {
-        foreach ( $element['#default_value'] as $value_row) {
-            $row = gridform_table_fillrow( $def_row, $value_row, $row_ind++, $element['#name'] );
-
-            if(!empty($show_line_number)) {
-              $line_number++;
-              array_unshift( $row, '<span class="line-number">' . $line_number . '</span>'); //add line numbers
-            }
-            if (!isset($element['#attributes']['readonly']) || !$element['#attributes']['readonly']) {
-              array_unshift($row, '<input type="checkbox" class="grid_select_check" />');
-            }
-            $rows[] = $row;
-        }
-    }
-
-  }
-
-  if (!count($rows)) {
-    //Test for count of needed autogenerated rows
-    for ( $rows_to_add = $element['#row_count'] - count( $rows ); $rows_to_add > 0; $rows_to_add-- ){
-      $row = gridform_table_fillrow( $def_row, $def_row_val, $row_ind++, $element['#name'] );
-
-      if(!empty($show_line_number)) {
+    foreach ($element['#value'] as $value_row) {
+      $row = gridform_table_fillrow($def_row, $value_row, $row_ind++, $element['#name']);
+      // Add controls.
+      if (!empty($show_line_number)) {
         $line_number++;
-        array_unshift( $row, '<span class="line-number">' . $line_number . '</span>'); //add line numbers
+        // Add line numbers.
+        array_unshift($row, '<span class="line-number">' . $line_number . '</span>');
       }
       if (!isset($element['#attributes']['readonly']) || !$element['#attributes']['readonly']) {
         array_unshift($row, '<input type="checkbox" class="grid_select_check" />');
@@ -375,138 +377,194 @@ function theme_tablegrid(  $element ){
       $rows[] = $row;
     }
   }
-    
-  //Add one default_row for add new row function
-  $row = gridform_table_fillrow( $def_row, $def_row_val, $row_ind++, $element['#name'], array('disabled'=>TRUE) );
-  if(!empty($show_line_number)) {
-    array_unshift( $row, '<span class="line-number">' . $line_number . '</div>'); //add line numbers
+  else {
+    if (is_array($element['#default_value'])) {
+      foreach ($element['#default_value'] as $value_row) {
+        $row = gridform_table_fillrow($def_row, $value_row, $row_ind++, $element['#name']);
+
+        if (!empty($show_line_number)) {
+          $line_number++;
+          // Add line numbers.
+          array_unshift($row, '<span class="line-number">' . $line_number . '</span>');
+        }
+        if (!isset($element['#attributes']['readonly']) || !$element['#attributes']['readonly']) {
+          array_unshift($row, '<input type="checkbox" class="grid_select_check" />');
+        }
+        $rows[] = $row;
+      }
+    }
+
+  }
+
+  if (!count($rows)) {
+    // Test for count of needed autogenerated rows.
+    for ($rows_to_add = $element['#row_count'] - count($rows); $rows_to_add > 0; $rows_to_add--) {
+      $row = gridform_table_fillrow($def_row, $def_row_val, $row_ind++, $element['#name']);
+
+      if (!empty($show_line_number)) {
+        $line_number++;
+        // Add line numbers.
+        array_unshift($row, '<span class="line-number">' . $line_number . '</span>');
+      }
+      if (!isset($element['#attributes']['readonly']) || !$element['#attributes']['readonly']) {
+        array_unshift($row, '<input type="checkbox" class="grid_select_check" />');
+      }
+      $rows[] = $row;
+    }
+  }
+
+  // Add one default_row for add new row function.
+  $row = gridform_table_fillrow($def_row, $def_row_val, $row_ind++, $element['#name'], array('disabled' => TRUE));
+  if (!empty($show_line_number)) {
+    // Add line numbers.
+    array_unshift($row, '<span class="line-number">' . $line_number . '</div>');
   }
   if (!isset($element['#attributes']['readonly']) || !$element['#attributes']['readonly']) {
-    array_unshift($row, '<input type="checkbox" class="grid_select_check" />'); //add controls
+    // Add controls.
+    array_unshift($row, '<input type="checkbox" class="grid_select_check" />');
   }
-  $rows[] = array( 'data'=>$row, 'class'=>'tablegrid_default_new_row', 'style' => 'display:none');
+  $rows[] = array(
+    'data' => $row,
+    'class' => 'tablegrid_default_new_row',
+    'style' => 'display:none',
+  );
 
-  $output .= theme_table($header, $rows, $element['#attributes'], $element['#title']);
-  if ( !isset($element['#attributes']['readonly']) || !$element['#attributes']['readonly'] ) {
-      $output .= '<button class="add-row" onclick="return forms_add_row( this );">' . t( 'Add row' ) . '</button>';
-      $output .= '<button class="del-row" onclick="return forms_del_row( this );">' . t( 'Remove checked rows' ) . '</button>';
+  $output .= theme('table', $header, $rows, $element['#attributes'], $element['#title']);
+  if (!isset($element['#attributes']['readonly']) || !$element['#attributes']['readonly']) {
+    $output .= '<button class="add-row" onclick="return forms_add_row( this );">' . t('Add row') . '</button>';
+    $output .= '<button class="del-row" onclick="return forms_del_row( this );">' . t('Remove checked rows') . '</button>';
   }
 
-  return theme('form_element', $element, $output) ;
+  return theme('form_element', $element, $output);
 }
 
+/**
+ * Implements hook_form_type_HOOK_value().
+ */
 function form_type_tablegrid_value($element, $edit = FALSE) {
-   if (func_num_args() == 1) {
-        //Run expand/process hooks
-        $row_count = count($element['#default_value']);
-        $out = array();
-        $parent_name = end( $element['#parents'] );
-        $children = element_children( $element);
+  if (func_num_args() == 1) {
+    // Run expand/process hooks.
+    $row_count = count($element['#default_value']);
+    $out = array();
+    $parent_name = end($element['#parents']);
+    $children = element_children($element);
 
-        //Run form_type_hook_value on each tablegrid element
-        foreach( $children as $child_key ) {
-            if ((!empty($element[$child_key]['#type'])) && ($info = _element_info($element[$child_key]['#type']))) {
-                // Overlay $info onto $form, retaining preexisting keys in $form.
-                $element[$child_key] += $info;
-            }
-            
-            $child_func = 'form_type_' . $element[$child_key]['#type'] . '_value';
-            if ( function_exists( $child_func) ) {
-                for( $row_ind = 0; $row_ind < $row_count; $row_ind++ ) {
-                    $element[$child_key]['#default_value'] = $element['#default_value'][$row_ind][$child_key];
-                    $element_value = $child_func( $element[$child_key] );
-                    if ( isset($element_value) ) {
-                        $out[$row_ind][$child_key] = $element_value;
-                    } else {
-                        $out[$row_ind][$child_key] = $element['#default_value'][$row_ind][$child_key];
-                    }
-                }
-            } else  {
-                for( $row_ind = 0; $row_ind < $row_count; $row_ind++ ) {
-                    $out[$row_ind][$child_key] = $element['#default_value'][$row_ind][$child_key];
-                }
-            }
-        }
-        return $out;
-   }
-    
-    //Check for checkboxes; if there are no any, just return edit
+    // Run form_type_hook_value on each tablegrid element.
+    foreach ($children as $child_key) {
+      if ((!empty($element[$child_key]['#type'])) && ($info = _element_info($element[$child_key]['#type']))) {
+        // Overlay $info onto $form, retaining preexisting keys in $form.
+        $element[$child_key] += $info;
+      }
 
-    $complete_parse = FALSE;
-    foreach ( ( $children = element_children( $element)) as $child_key ) {
-        if ( in_array( $element[$child_key]['#type'], array( 'checkbox', 'maskedinput', 'linked', 'contribuabil' )) ) {
-            $complete_parse = TRUE;
+      $child_func = 'form_type_' . $element[$child_key]['#type'] . '_value';
+      if (function_exists($child_func)) {
+        for ($row_ind = 0; $row_ind < $row_count; $row_ind++) {
+          $element[$child_key]['#default_value'] = $element['#default_value'][$row_ind][$child_key];
+          $element_value = $child_func($element[$child_key]);
+          if (isset($element_value)) {
+            $out[$row_ind][$child_key] = $element_value;
+          }
+          else {
+            $out[$row_ind][$child_key] = $element['#default_value'][$row_ind][$child_key];
+          }
         }
+      }
+      else {
+        for ($row_ind = 0; $row_ind < $row_count; $row_ind++) {
+          $out[$row_ind][$child_key] = $element['#default_value'][$row_ind][$child_key];
+        }
+      }
     }
+    return $out;
+  }
 
-    //Filter out empty ("zerro-ed") rows
-
-    if (is_array($edit)) {
-        foreach($edit as $row_ind=>$row){
-            if (!count(array_filter($row))) {
-                unset($edit[$row_ind]);
-            }
-        }
+  // Check for checkboxes; if there are no any, just return edit.
+  $complete_parse = FALSE;
+  foreach (($children = element_children($element)) as $child_key) {
+    if (in_array($element[$child_key]['#type'], array(
+      'checkbox',
+      'maskedinput',
+      'linked',
+      'contribuabil',
+    ))) {
+      $complete_parse = TRUE;
     }
-    
-    if ( $complete_parse ) {
-        $row_count = count($edit);
-        $out = array();
-        $parent_name = end( $element['#parents'] );
+  }
 
-        //Run form_type_hook_value on each tablegrid element
-        foreach( $children as $child_key ) {
-            if ((!empty($element[$child_key]['#type'])) && ($info = _element_info($element[$child_key]['#type']))) {
-                // Overlay $info onto $form, retaining preexisting keys in $form.
-                $element[$child_key] += $info;
-            }
-            
-            $child_func = 'form_type_' . $element[$child_key]['#type'] . '_value';
-            if ( function_exists( $child_func) ) {
-                for( $row_ind = 0; $row_ind < $row_count; $row_ind++ ) {
-                    $element_value = $child_func( $element[$child_key], $edit[$row_ind][$child_key] );
-                    if ( $element_value ) {
-                        $out[$row_ind][$child_key] = $element_value;
-                    } else {
-                        $out[$row_ind][$child_key] = $edit[$row_ind][$child_key];
-                    }
-                }
-            } else  {
-                for( $row_ind = 0; $row_ind < $row_count; $row_ind++ ) {
-                    $out[$row_ind][$child_key] = $edit[$row_ind][$child_key];
-                }
-            }
-            //Run element validate functions
-            if ( is_array( $element[$child_key]['#element_validate'] ) && count( $element[$child_key]['#element_validate'] )  ) {
-                $form_state = array();
-                $test_element = $element[$child_key];
-                foreach ( $element[$child_key]['#element_validate'] as $validate_func ) {
-                    if ( function_exists( $validate_func ) ) {
-                        for( $row_ind = 0; $row_ind < $row_count; $row_ind++ ) {
-                            $test_element['#value'] = $out[$row_ind][$child_key];
-                            $test_element['#name'] = $parent_name . "[$row_ind][$child_key]";
-                            $test_element['#parents'] = array( $parent_name, $row_ind, $child_key );
-                            $test_element = $validate_func( $test_element, $form_state );
+  // Filter out empty ("zerro-ed") rows.
+  if (is_array($edit)) {
+    foreach ($edit as $row_ind => $row) {
+      if (!count(array_filter($row))) {
+        unset($edit[$row_ind]);
+      }
+    }
+  }
 
-                            //Check if form_state has changed in hook_validate (like contribuabil module does)
-                            if (is_array($form_state['values'])) {
-                              foreach ($form_state['values'][$parent_name] as $row_ind => $row_arr) {
-                                foreach ($row_arr as $vfield=>$vfield_value) {
-                                  if (isset($vfield_value) && $out[$row_ind][$vfield] != $vfield_value) {
-                                    $out[$row_ind][$vfield] = $vfield_value;
-                                  }
-                                }
-                              }
-                            }
-                        }
+  if ($complete_parse) {
+    $row_count = count($edit);
+    $out = array();
+    $parent_name = end($element['#parents']);
 
-                    }
+    // Run form_type_hook_value on each tablegrid element.
+    foreach ($children as $child_key) {
+      if ((!empty($element[$child_key]['#type'])) && ($info = _element_info($element[$child_key]['#type']))) {
+        // Overlay $info onto $form, retaining preexisting keys in $form.
+        $element[$child_key] += $info;
+      }
 
-                }
-            }
+      $child_func = 'form_type_' . $element[$child_key]['#type'] . '_value';
+      if (function_exists($child_func)) {
+        for ($row_ind = 0; $row_ind < $row_count; $row_ind++) {
+          $element_value = $child_func($element[$child_key], $edit[$row_ind][$child_key]);
+          if ($element_value) {
+            $out[$row_ind][$child_key] = $element_value;
+          }
+          else {
+            $out[$row_ind][$child_key] = $edit[$row_ind][$child_key];
+          }
         }
-        return $out;
-    } 
+      }
+      else {
+        for ($row_ind = 0; $row_ind < $row_count; $row_ind++) {
+          $out[$row_ind][$child_key] = $edit[$row_ind][$child_key];
+        }
+      }
+      // Run element validate functions.
+      if (is_array($element[$child_key]['#element_validate']) && count($element[$child_key]['#element_validate'])) {
+        $form_state = array();
+        $test_element = $element[$child_key];
+        foreach ($element[$child_key]['#element_validate'] as $validate_func) {
+          if (function_exists($validate_func)) {
+            for ($row_ind = 0; $row_ind < $row_count; $row_ind++) {
+              $test_element['#value'] = $out[$row_ind][$child_key];
+              $test_element['#name'] = $parent_name . "[$row_ind][$child_key]";
+              $test_element['#parents'] = array(
+                $parent_name,
+                $row_ind,
+                $child_key,
+              );
+              $test_element = $validate_func($test_element, $form_state);
 
-    return $edit;
+              // Check if form_state has changed in hook_validate (like
+              // contribuabil module does).
+              if (is_array($form_state['values'])) {
+                foreach ($form_state['values'][$parent_name] as $row_ind => $row_arr) {
+                  foreach ($row_arr as $vfield => $vfield_value) {
+                    if (isset($vfield_value) && $out[$row_ind][$vfield] != $vfield_value) {
+                      $out[$row_ind][$vfield] = $vfield_value;
+                    }
+                  }
+                }
+              }
+            }
+
+          }
+
+        }
+      }
+    }
+    return $out;
+  }
+
+  return $edit;
 }
