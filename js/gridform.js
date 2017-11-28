@@ -21,15 +21,27 @@
     });
     $(this).find(":input").each( function() {
       var input = $(this),
-          name = input.attr('name');
+          name = input.attr('name'),
+          type = input.attr('type');
       if (!name) {
         return;
       }
-      var name_parts = name.match(/^(.*)\[(\d+)\]\[(.*)\]$/);
+
+      if (type == 'file') {
+        var name_parts = name.match(/^files\[(.*)_(\d+)_(.*)\]$/);
+      } else {
+        var name_parts = name.match(/^(.*)\[(\d+)\]\[(.*)\]$/);
+      }
       if (!name_parts) {
         return;
       }
-      var new_name = name_parts[1] + '[' + renumber_grid_elements_current + '][' + name_parts[3] + ']';
+
+      if (type == 'file') {
+        var new_name = 'files[' + name_parts[1] + '_' + renumber_grid_elements_current + '_' + name_parts[3] + ']';
+      } else {
+        var new_name = name_parts[1] + '[' + renumber_grid_elements_current + '][' + name_parts[3] + ']';
+      }
+
       input.attr( 'name', new_name );
       var input_id = input.attr( 'id' );
       if (!input_id) {
