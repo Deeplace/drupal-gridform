@@ -49,6 +49,16 @@ function tablegrid_validate($element, &$form_state) {
     }
   }
 
+  // Filter out empty ("zerro-ed") rows.
+  $parent = end($element['#parents']);
+  if (isset($form_state['values'][$parent]) && is_array($form_state['values'][$parent])) {
+    foreach ($form_state['values'][$parent] as $key => $value) {
+      if (!count(array_filter($value))) {
+        unset($form_state['values'][$parent][$key]);
+      }
+    }
+  }
+
   return $element;
 }
 
@@ -336,7 +346,7 @@ function theme_tablegrid($element) {
         $def_row_val[] = $item['#value'];
       }
       else {
-        $def_row_val[] = 0;
+        $def_row_val[] = '';
       }
 
       unset($item['#printed'], $item['#value']);
