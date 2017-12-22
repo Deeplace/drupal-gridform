@@ -3,7 +3,7 @@
   var renumber_grid_elements_current = 0;
 
   function renumber_grid_elements(tbody){
-    tbody.find("tr").each(function(i){
+    tbody.find("tr").not('.skip-tablegrid-row').each(function(i){
     renumber_grid_elements_current = i;
     $(this).find("div.form-item").each( function() {
       var input = $(this),
