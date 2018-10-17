@@ -6,23 +6,36 @@
  */
 
 /**
- * Implements hook_elements().
+ * Implements hook_element_info().
  */
-function gridform_elements() {
+function gridform_element_info() {
+  $module_path = drupal_get_path('module', 'gridform');
+
   $type['grid'] = array(
     '#input' => TRUE,
     '#layout' => 'vertical',
     '#process' => array('gridform_grid_expand'),
+    '#title' => NULL,
+    '#theme' => 'grid',
+    '#attributes' => array(),
   );
+
   $type['tablegrid'] = array(
     '#input' => TRUE,
     '#process' => array('gridform_table_expand'),
     '#default_value' => NULL,
-    '#row_count' => NULL,
+    '#theme' => 'tablegrid',
+    '#title' => NULL,
+    '#attributes' => array(),
+    '#row_count' => 1,
     '#header' => NULL,
     '#element_validate' => array('tablegrid_validate'),
     '#show_line_numbers' => FALSE,
+    '#attached' => array(
+      'js' => array($module_path . '/js/gridform.js'),
+    ),
   );
+
   return $type;
 }
 
@@ -30,20 +43,19 @@ function gridform_elements() {
  * Implements hook_validate().
  */
 function tablegrid_validate($element, &$form_state) {
-  if (empty($element['#value']) && $element['required']) {
+  if (empty($element['#value']) && !empty($element['required'])) {
     form_set_error($element['#name'], t('Fill at least one row'));
   }
 
-  if (is_array($element['#value'])) {
+  if (isset($element['#value']) && is_array($element['#value'])) {
     $children = element_children($element);
     foreach ($element['#value'] as $row_ind => $row) {
       foreach ($children as $child) {
-        if ($element[$child]['#required'] && (empty($row[$child]) || !count($row[$child]) || (is_string($row[$child]) && strlen(trim($row[$child])) == 0))) {
-          form_set_error($element['#name'],
-            t('Field @fieldname in row @rownum is required', array(
-              '@fieldname' => $element[$child]['#title'],
-              '@rownum' => $row_ind + 1,
-            )));
+        if (!empty($element[$child]['#required']) && (empty($row[$child]) || !count($row[$child]) || (is_string($row[$child]) && strlen(trim($row[$child])) == 0))) {
+          form_set_error($element['#name'], t('Field @fieldname in row @rownum is required', array(
+            '@fieldname' => $element[$child]['#title'],
+            '@rownum' => $row_ind + 1,
+          )));
         }
       }
     }
@@ -70,11 +82,12 @@ function gridform_table_expand($element) {
   foreach (element_children($element) as $key) {
     $element[$key]['#input'] = FALSE;
     // Grab form element info.
-    if ((!empty($element[$key]['#type'])) && ($info = _element_info($element[$key]['#type']))) {
+    if ((!empty($element[$key]['#type'])) && ($info = element_info($element[$key]['#type']))) {
       // Overlay $info onto $form, retaining preexisting keys in $form.
       $element[$key] += $info;
     }
   }
+
   return $element;
 }
 
@@ -83,9 +96,9 @@ function gridform_table_expand($element) {
  */
 function gridform_grid_expand($element) {
   $markups = array(
-    'rowstart' => array('#type' => 'markup', '#value' => theme('grid_rowstart')),
-    'rowend' => array('#type' => 'markup', '#value' => theme('grid_rowend')),
-    'innercell' => array('#type' => 'markup', '#value' => theme('grid_innercell')),
+    'rowstart' => array('#type' => 'markup', '#markup' => theme('grid_rowstart')),
+    'rowend' => array('#type' => 'markup', '#markup' => theme('grid_rowend')),
+    'innercell' => array('#type' => 'markup', '#markup' => theme('grid_innercell')),
   );
 
   $out = array();
@@ -120,8 +133,7 @@ function gridform_grid_expand($element) {
         $out_sub_val['grid_sep2_' . $el2_iter] = $markups['rowend'];
         $out[$sub_key] = $out_sub_val;
       }
-      // Horizontal simple layout, if set explicit.
-      elseif ($element['#layout'] == 'horizontal') {
+      elseif ($element['#layout'] == 'horizontal') { // Horizontal simple layout, if set explicit.
         if (!$el_iter) {
           $out['grid_sep_' . $el_iter] = $markups['rowstart'];
         }
@@ -131,13 +143,11 @@ function gridform_grid_expand($element) {
         $out[$sub_key] = $sub_val;
         $el_iter++;
       }
-      // Vertical implicit layout.
-      else {
-        $out['grid_sep_' . $el_iter] = $max_colls > 1 ? array(
-          '#type' => 'markup',
-          '#value' => theme('grid_rowstart', array('colspan' => $max_colls)),
-        ) :
-              $markups['rowstart'];
+      else { // Vertical implicit layout.
+        $out['grid_sep_' . $el_iter] = $max_colls > 1
+          ? array('#type' => 'markup', '#markup' => theme('grid_rowstart', array('attributes' => array('colspan' => $max_colls))))
+          : $markups['rowstart'];
+
         $out[$sub_key] = $sub_val;
         $el_iter++;
         $out['grid_sep_' . $el_iter] = $markups['rowend'];
@@ -162,12 +172,13 @@ function gridform_grid_expand($element) {
        * else
        * cell_end, cell_start . el
        */
-
     }
   }
+
   if (array_key_exists('markup', $element) && $element['markup'] === 'horizontal') {
     $out['grid_sep_' . $el_iter] = $markups['rowend'];
   }
+
   return $out;
 }
 
@@ -178,20 +189,20 @@ function gridform_grid_expand($element) {
  */
 function gridform_theme() {
   return array(
+    'tablegrid' => array(
+      'render element' => 'element',
+    ),
     'grid' => array(
-      'arguments' => array('element'),
+      'render element' => 'element',
     ),
     'grid_rowstart' => array(
-      'arguments' => array('attributes' => NULL),
+      'variables' => array('attributes' => array()),
     ),
     'grid_rowend' => array(
-      'arguments' => array(),
+      'variables' => array(),
     ),
     'grid_innercell' => array(
-      'arguments' => array('attributes' => NULL),
-    ),
-    'tablegrid' => array(
-      'arguments' => array('element'),
+      'variables' => array('attributes' => array()),
     ),
   );
 }
@@ -199,7 +210,8 @@ function gridform_theme() {
 /**
  * Theme function for row start.
  */
-function theme_grid_rowstart($attributes = NULL) {
+function theme_grid_rowstart($variables) {
+  $attributes = $variables['attributes'];
   return '<tr><td ' . drupal_attributes($attributes) . '>';
 }
 
@@ -213,16 +225,22 @@ function theme_grid_rowend() {
 /**
  * Theme function for cell space.
  */
-function theme_grid_innercell($attributes = NULL) {
+function theme_grid_innercell($variables) {
+  $attributes = $variables['attributes'];
   return '</td><td ' . drupal_attributes($attributes) . '>';
 }
 
 /**
  * Theme function to format the output of grid form element type.
  */
-function theme_grid($element) {
+function theme_grid($variables) {
   $output = '';
+  $element = $variables['element'];
 
+  $element['#children'] = '';
+  foreach (element_children($element) as $key => $fname) {
+    $element['#children'] .= drupal_render($element[$fname]);
+  }
   if (!empty($element['#description'])) {
     $output .= ' <div class="description">' . $element['#description'] . "</div>\n";
   }
@@ -245,7 +263,7 @@ function gridform_table_fillrow($row, $vals, $row_index, $parent_name, $attribut
       $item['#parents'] = array($parent_name, $row_index, $item_key);
 
       /* And process form element if needed */
-      $item['#id'] = form_clean_id('edit-' . $parent_name . '-' . $row_index . '-' . $item_key);
+      $item['#id'] = drupal_html_id('edit-' . $parent_name . '-' . $row_index . '-' . $item_key);
       if ($attributes) {
         if (is_array($item['#attributes'])) {
           $item['#attributes'] = array_merge($item['#attributes'], $attributes);
@@ -270,10 +288,11 @@ function gridform_table_fillrow($row, $vals, $row_index, $parent_name, $attribut
         $item[$child_key]['#parents'] = $item['#parents'];
         $item[$child_key]['#parents'][] = $child_key;
         $parent_name = array_shift($item[$child_key]['#parents']);
-        $item[$child_key]['#id'] = str_replace('_', '-','edit-' . $parent_name . '-' . implode('-', $item[$child_key]['#parents']));
+        $item[$child_key]['#id'] = str_replace('_', '-', 'edit-' . $parent_name . '-' . implode('-', $item[$child_key]['#parents']));
         if ($item[$child_key]['#type'] == 'file') {
           $item[$child_key]['#name'] = 'files[' . implode('_', $item['#parents']) . ']';
-        } else {
+        }
+        else {
           $item[$child_key]['#name'] = $parent_name . '[' . implode('][', $item[$child_key]['#parents']) . ']';
         }
         array_unshift($item[$child_key]['#parents'], $parent_name);
@@ -300,11 +319,9 @@ function gridform_table_fillrow($row, $vals, $row_index, $parent_name, $attribut
 /**
  * Theme function to format the output of tablegrid form element type.
  */
-function theme_tablegrid($element) {
+function theme_tablegrid($variables) {
   $output = '';
-
-  $path = drupal_get_path('module', 'gridform');
-  drupal_add_js($path . '/js/gridform.js');
+  $element = $variables['element'];
 
   /*
    * Do analysis
@@ -364,7 +381,7 @@ function theme_tablegrid($element) {
           '{%ROW_IND_PLACEHOLDER%}',
           $item_key,
         );
-        $item['#id'] = form_clean_id('edit-' . $element['#name'] . '-{%ROW_IND_PLACEHOLDER%}-' . $item_key);
+        $item['#id'] = drupal_html_id('edit-' . $element['#name'] . '-{%ROW_IND_PLACEHOLDER%}-' . $item_key);
         $def_row[$item_key] = drupal_render($item);
       }
       // For other types - delay html code generation.
@@ -401,12 +418,11 @@ function theme_tablegrid($element) {
     }
   }
   else {
-    if (is_array($element['#default_value'])) {
+    if (isset($element['#default_value']) && is_array($element['#default_value'])) {
       foreach ($element['#default_value'] as $value_row) {
         $rows[] = $gridform_table_formatrow($def_row, $value_row, $element);
       }
     }
-
   }
 
   if (!count($rows)) {
@@ -419,17 +435,25 @@ function theme_tablegrid($element) {
   // Add one default_row for add new row function.
   $rows[] = array(
     'data' => $gridform_table_formatrow($def_row, $def_row_val, $element, array('disabled' => TRUE)),
-    'class' => 'tablegrid_default_new_row',
+    'class' => array('tablegrid_default_new_row'),
     'style' => 'display:none',
   );
 
-  $output .= theme('table', $header, $rows, $element['#attributes'], $element['#title']);
+  $output .= theme('table', array(
+    'header' => $header,
+    'rows' => $rows,
+    'attributes' => $element['#attributes'],
+    'title' => $element['#title']
+  ));
+
   if (!isset($element['#attributes']['readonly']) || !$element['#attributes']['readonly']) {
-    $output .= '<button class="add-row" onclick="return forms_add_row( this );">' . t('Add row') . '</button>';
-    $output .= '<button class="del-row" onclick="return forms_del_row( this );">' . t('Remove checked rows') . '</button>';
+    $output .= '<button class="add-row">' . t('Add row') . '</button>';
+    $output .= '<button class="del-row">' . t('Remove checked rows') . '</button>';
   }
 
-  return theme('form_element', $element, $output);
+  $element['#children'] = $output;
+
+  return theme('form_element', array('element' => $element));
 }
 
 /**
@@ -445,7 +469,7 @@ function form_type_tablegrid_value($element, $edit = FALSE) {
 
     // Run form_type_hook_value on each tablegrid element.
     foreach ($children as $child_key) {
-      if ((!empty($element[$child_key]['#type'])) && ($info = _element_info($element[$child_key]['#type']))) {
+      if ((!empty($element[$child_key]['#type'])) && ($info = element_info($element[$child_key]['#type']))) {
         // Overlay $info onto $form, retaining preexisting keys in $form.
         $element[$child_key] += $info;
       }
@@ -502,7 +526,7 @@ function form_type_tablegrid_value($element, $edit = FALSE) {
 
     // Run form_type_hook_value on each tablegrid element.
     foreach ($children as $child_key) {
-      if ((!empty($element[$child_key]['#type'])) && ($info = _element_info($element[$child_key]['#type']))) {
+      if ((!empty($element[$child_key]['#type'])) && ($info = element_info($element[$child_key]['#type']))) {
         // Overlay $info onto $form, retaining preexisting keys in $form.
         $element[$child_key] += $info;
       }
@@ -556,7 +580,6 @@ function form_type_tablegrid_value($element, $edit = FALSE) {
             }
 
           }
-
         }
       }
     }

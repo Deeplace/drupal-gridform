@@ -1,59 +1,74 @@
-(function(){
+(function($) {
   'use strict';
   var renumber_grid_elements_current = 0;
 
+  Drupal.behaviors.gridform = {
+    attach: function(context, settings) {
+      $('.add-row', context).click(function(event) {
+        event.preventDefault();
+        forms_add_row(this);
+      });
+
+      $('.del-row', context).click(function(event) {
+        event.preventDefault();
+        forms_del_row(this);
+      });
+    }
+  };
+
   function renumber_grid_elements(tbody){
-    tbody.find("tr").not('.skip-tablegrid-row').each(function(i){
-    renumber_grid_elements_current = i;
-    $(this).find("div.form-item").each( function() {
-      var input = $(this),
-          input_id = input.attr( 'id' );
-      if (!input_id) {
-        return;
-      }
+    tbody.find("tr").not('.skip-tablegrid-row').each(function(i) {
+      renumber_grid_elements_current = i;
+      $(this).find("div.form-item").each( function() {
+        var input = $(this),
+        input_id = input.attr( 'id' );
+        if (!input_id) {
+          return;
+        }
 
-      var reg_id = new RegExp("", "i");
-      reg_id.compile("-\\d+-", "i");
-      var new_input_id = input_id.replace( reg_id, '-' + renumber_grid_elements_current + '-');
-      if (new_input_id && new_input_id!==input_id) {
-        input.attr( 'id', new_input_id);
-      }
-    });
-    $(this).find(":input").each( function() {
-      var input = $(this),
-          name = input.attr('name'),
-          type = input.attr('type');
-      if (!name) {
-        return;
-      }
+        var reg_id = new RegExp("", "i");
+        reg_id.compile("-\\d+-", "i");
+        var new_input_id = input_id.replace( reg_id, '-' + renumber_grid_elements_current + '-');
+        if (new_input_id && new_input_id!==input_id) {
+          input.attr( 'id', new_input_id);
+        }
+      });
 
-      if (type == 'file') {
-        var name_parts = name.match(/^files\[(.*)_(\d+)_(.*)\]$/);
-      } else {
-        var name_parts = name.match(/^(.*)\[(\d+)\]\[(.*)\]$/);
-      }
-      if (!name_parts) {
-        return;
-      }
+      $(this).find(":input").each( function() {
+        var input = $(this),
+        name = input.attr('name'),
+        type = input.attr('type');
+        if (!name) {
+          return;
+        }
 
-      if (type == 'file') {
-        var new_name = 'files[' + name_parts[1] + '_' + renumber_grid_elements_current + '_' + name_parts[3] + ']';
-      } else {
-        var new_name = name_parts[1] + '[' + renumber_grid_elements_current + '][' + name_parts[3] + ']';
-      }
+        if (type == 'file') {
+          var name_parts = name.match(/^files\[(.*)_(\d+)_(.*)\]$/);
+        } else {
+          var name_parts = name.match(/^(.*)\[(\d+)\]\[(.*)\]$/);
+        }
+        if (!name_parts) {
+          return;
+        }
 
-      input.attr( 'name', new_name );
-      var input_id = input.attr( 'id' );
-      if (!input_id) {
-        return;
-      }
-      var reg_id = new RegExp("", "i");
-      reg_id.compile("-" + name_parts[2] + "-", "i");
-      var new_input_id = input_id.replace( reg_id, '-' + renumber_grid_elements_current + '-');
-      if (new_input_id && new_input_id !== input_id) {
-        input.attr( 'id', new_input_id);
-      }
-    });
+        if (type == 'file') {
+          var new_name = 'files[' + name_parts[1] + '_' + renumber_grid_elements_current + '_' + name_parts[3] + ']';
+        } else {
+          var new_name = name_parts[1] + '[' + renumber_grid_elements_current + '][' + name_parts[3] + ']';
+        }
+
+        input.attr( 'name', new_name );
+        var input_id = input.attr( 'id' );
+        if (!input_id) {
+          return;
+        }
+        var reg_id = new RegExp("", "i");
+        reg_id.compile("-" + name_parts[2] + "-", "i");
+        var new_input_id = input_id.replace( reg_id, '-' + renumber_grid_elements_current + '-');
+        if (new_input_id && new_input_id !== input_id) {
+          input.attr( 'id', new_input_id);
+        }
+      });
 
       if($(this).find('.line-number').length > 0) {
         $(this).find('.line-number').text(renumber_grid_elements_current + 1);
@@ -61,29 +76,25 @@
     });
   }
 
-  window.forms_add_row = function(button) {
+  function forms_add_row(button) {
     $(button).parent().find( "tr.tablegrid_default_new_row" ).each(function(i) {
       var row = $(this),
-          zebra_class = ( row.parent().find('tr').length % 2) ? 'odd' : 'even';
+      zebra_class = ( row.parent().find('tr').length % 2) ? 'odd' : 'even';
       row.before( '<tr class="' + zebra_class + '">' + row.html() + '</tr>' );
       row.prev().find( ":input" ).removeAttr( 'disabled' );
       renumber_grid_elements(row.parent());
     });
-    return false;
   };
 
-  window.forms_del_row = function(button) {
+  function forms_del_row(button) {
     var jDIV = $(button).parent();
-    jDIV.find("input.grid_select_check:checkbox" ).each(
-        function(i) {
-          var checkbox = $(this);
-          if ( checkbox.attr( 'checked' ) ) {
-            checkbox.parent().parent().remove();
-          }
-        }
-      );
+    jDIV.find("input.grid_select_check:checkbox" ).each(function(i) {
+      var checkbox = $(this);
+      if (checkbox.prop('checked')) {
+        checkbox.parents('tr').remove();
+      }
+    });
     renumber_grid_elements(jDIV.find("tbody"));
-    return false;
   };
 
   /**
@@ -94,7 +105,7 @@
    * @param object data
    *  Data to fill with
    */
-  window.forms_set_rows = function(table, data){
+   function forms_set_rows(table, data){
     var tbody = table.children('tbody');
     //del all rows
     tbody.find('tr:not(.tablegrid_default_new_row)').remove();
@@ -116,4 +127,4 @@
     }
     renumber_grid_elements(tbody);
   };
-})();
+})(jQuery);
