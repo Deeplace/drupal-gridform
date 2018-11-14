@@ -20,6 +20,8 @@ function gridform_elements() {
     '#default_value' => NULL,
     '#row_count' => NULL,
     '#header' => NULL,
+    '#hide_buttons' => FALSE,
+    '#radio' => FALSE,
     '#element_validate' => array('tablegrid_validate'),
     '#show_line_numbers' => FALSE,
   );
@@ -385,13 +387,18 @@ function theme_tablegrid($element) {
       // Add line numbers.
       array_unshift($row, '<span class="line-number">' . $line_number . '</span>');
     }
+
+    $select_field = '';
     if (!isset($element['#attributes']['readonly']) || !$element['#attributes']['readonly']) {
-      $checkbox = '<input type="checkbox" class="grid_select_check" />';
+      if (empty($element['#radio'])) {
+        $select_field = '<input type="checkbox" class="grid_select_check" />';
+      } else {
+        $select_field = '<input type="radio" name="grid_select_radio" class="grid_select_check_radio" />';
+      }
     }
-    else {
-      $checkbox = '';
-    }
-    array_unshift($row, $checkbox);
+
+    array_unshift($row, $select_field);
+
     return $row;
   };
 
@@ -424,7 +431,7 @@ function theme_tablegrid($element) {
   );
 
   $output .= theme('table', $header, $rows, $element['#attributes'], $element['#title']);
-  if (!isset($element['#attributes']['readonly']) || !$element['#attributes']['readonly']) {
+  if ((!isset($element['#attributes']['readonly']) || !$element['#attributes']['readonly']) && empty($element['#hide_buttons'])) {
     $output .= '<button class="add-row" onclick="return forms_add_row( this );">' . t('Add row') . '</button>';
     $output .= '<button class="del-row" onclick="return forms_del_row( this );">' . t('Remove checked rows') . '</button>';
   }
