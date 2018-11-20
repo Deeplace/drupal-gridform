@@ -81,7 +81,8 @@
       var row = $(this),
       zebra_class = ( row.parent().find('tr').length % 2) ? 'odd' : 'even';
       row.before( '<tr class="' + zebra_class + '">' + row.html() + '</tr>' );
-      row.prev().find( ":input" ).removeAttr( 'disabled' );
+      row.prev().find(":input").removeAttr('disabled');
+      row.prev().find(".form-disabled").removeClass('form-disabled');
       renumber_grid_elements(row.parent());
     });
   };
@@ -91,7 +92,7 @@
     jDIV.find("input.grid_select_check:checkbox" ).each(function(i) {
       var checkbox = $(this);
       if (checkbox.prop('checked')) {
-        checkbox.parents('tr').remove();
+        checkbox.parent().parent().remove();
       }
     });
     renumber_grid_elements(jDIV.find("tbody"));
@@ -116,6 +117,7 @@
       ii++;
       var new_row = default_row.clone().show();
       new_row.find(':input').removeAttr('disabled');
+      new_row.find('.form-disabled').removeClass('form-disabled');
       new_row.attr('class', ii%2 ? 'odd' : 'even');
       //fill in values
       var ji = 0;
