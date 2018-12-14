@@ -457,7 +457,7 @@ function theme_tablegrid($variables) {
 function form_type_tablegrid_value($element, $input = FALSE, $form_state = NULL) {
   if ($input === FALSE) {
     // Run expand/process hooks.
-    $row_count = count($element['#default_value']);
+    $row_count = is_array($element['#default_value']) ? count($element['#default_value']) : 0;
     $out = array();
     $parent_name = end($element['#parents']);
     $children = element_children($element);
