@@ -16,28 +16,28 @@
     }
   };
 
-  function renumber_grid_elements(tbody){
+  window.renumber_grid_elements = function (tbody) {
     tbody.find("tr").not('.skip-tablegrid-row').each(function(i) {
       renumber_grid_elements_current = i;
-      $(this).find("div.form-item").each( function() {
+      $(this).find("div.form-item").each(function() {
         var input = $(this),
-        input_id = input.attr( 'id' );
+          input_id = input.attr('id');
         if (!input_id) {
           return;
         }
 
         var reg_id = new RegExp("", "i");
         reg_id.compile("-\\d+-", "i");
-        var new_input_id = input_id.replace( reg_id, '-' + renumber_grid_elements_current + '-');
-        if (new_input_id && new_input_id!==input_id) {
-          input.attr( 'id', new_input_id);
+        var new_input_id = input_id.replace(reg_id, '-' + renumber_grid_elements_current + '-');
+        if (new_input_id && new_input_id !== input_id) {
+          input.attr('id', new_input_id);
         }
       });
 
-      $(this).find(":input").each( function() {
+      $(this).find(":input").each(function() {
         var input = $(this),
-        name = input.attr('name'),
-        type = input.attr('type');
+          name = input.attr('name'),
+          type = input.attr('type');
         if (!name) {
           return;
         }
@@ -57,39 +57,39 @@
           var new_name = name_parts[1] + '[' + renumber_grid_elements_current + '][' + name_parts[3] + ']';
         }
 
-        input.attr( 'name', new_name );
-        var input_id = input.attr( 'id' );
+        input.attr('name', new_name);
+        var input_id = input.attr('id');
         if (!input_id) {
           return;
         }
         var reg_id = new RegExp("", "i");
         reg_id.compile("-" + name_parts[2] + "-", "i");
-        var new_input_id = input_id.replace( reg_id, '-' + renumber_grid_elements_current + '-');
+        var new_input_id = input_id.replace(reg_id, '-' + renumber_grid_elements_current + '-');
         if (new_input_id && new_input_id !== input_id) {
-          input.attr( 'id', new_input_id);
+          input.attr('id', new_input_id);
         }
       });
 
-      if($(this).find('.line-number').length > 0) {
+      if ($(this).find('.line-number').length > 0) {
         $(this).find('.line-number').text(renumber_grid_elements_current + 1);
       }
     });
   }
 
-  function forms_add_row(button) {
-    $(button).parent().find( "tr.tablegrid_default_new_row" ).each(function(i) {
+  window.forms_add_row = function (button) {
+    $(button).parent().find("tr.tablegrid_default_new_row").each(function(i) {
       var row = $(this),
-      zebra_class = ( row.parent().find('tr').length % 2) ? 'odd' : 'even';
-      row.before( '<tr class="' + zebra_class + '">' + row.html() + '</tr>' );
+        zebra_class = (row.parent().find('tr').length % 2) ? 'odd' : 'even';
+      row.before('<tr class="' + zebra_class + '">' + row.html() + '</tr>');
       row.prev().find(":input").removeAttr('disabled');
       row.prev().find(".form-disabled").removeClass('form-disabled');
       renumber_grid_elements(row.parent());
     });
   };
 
-  function forms_del_row(button) {
+  window.forms_del_row = function (button) {
     var jDIV = $(button).parent();
-    jDIV.find("input.grid_select_check:checkbox" ).each(function(i) {
+    jDIV.find("input.grid_select_check:checkbox").each(function(i) {
       var checkbox = $(this);
       if (checkbox.prop('checked')) {
         checkbox.parent().parent().remove();
@@ -106,7 +106,7 @@
    * @param object data
    *  Data to fill with
    */
-   function forms_set_rows(table, data){
+  window.forms_set_rows = function (table, data) {
     var tbody = table.children('tbody');
     //del all rows
     tbody.find('tr:not(.tablegrid_default_new_row)').remove();
@@ -118,12 +118,12 @@
       var new_row = default_row.clone().show();
       new_row.find(':input').removeAttr('disabled');
       new_row.find('.form-disabled').removeClass('form-disabled');
-      new_row.attr('class', ii%2 ? 'odd' : 'even');
+      new_row.attr('class', ii % 2 ? 'odd' : 'even');
       //fill in values
       var ji = 0;
       for (var j in data[i]) {
         ji++;
-        new_row.find('td:eq('+ji+') :input').val(data[i][j]);
+        new_row.find('td:eq(' + ji + ') :input').val(data[i][j]);
       }
       default_row.before(new_row);
     }
