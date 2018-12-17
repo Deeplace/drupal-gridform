@@ -81,9 +81,10 @@
       var row = $(this),
         zebra_class = (row.parent().find('tr').length % 2) ? 'odd' : 'even';
       row.before('<tr class="' + zebra_class + '">' + row.html() + '</tr>');
-      row.prev().find(":input").removeAttr('disabled');
+      row.prev().find(":input").removeAttr('disabled').trigger("qcombobox_init");
       row.prev().find(".form-disabled").removeClass('form-disabled');
       renumber_grid_elements(row.parent());
+
     });
   };
 
