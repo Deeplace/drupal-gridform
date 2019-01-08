@@ -6,12 +6,12 @@
     attach: function(context, settings) {
       $('.add-row', context).click(function(event) {
         event.preventDefault();
-        forms_add_row(this);
+        forms_add_row(this, settings);
       });
 
       $('.del-row', context).click(function(event) {
         event.preventDefault();
-        forms_del_row(this);
+        forms_del_row(this, settings);
       });
     }
   };
@@ -76,18 +76,20 @@
     });
   }
 
-  window.forms_add_row = function (button) {
+  window.forms_add_row = function (button, settings) {
     $(button).parent().find("tr.tablegrid_default_new_row").each(function(i) {
       var row = $(this),
         zebra_class = (row.parent().find('tr').length % 2) ? 'odd' : 'even';
       row.before('<tr class="' + zebra_class + '">' + row.html() + '</tr>');
-      row.prev().find(":input").removeAttr('disabled');
-      row.prev().find(".form-disabled").removeClass('form-disabled');
+      var new_row = row.prev();
+      new_row.find(":input").removeAttr('disabled');
+      new_row.find(".form-disabled").removeClass('form-disabled');
+      Drupal.attachBehaviors(new_row, settings);
       renumber_grid_elements(row.parent());
     });
   };
 
-  window.forms_del_row = function (button) {
+  window.forms_del_row = function (button, settings) {
     var jDIV = $(button).parent();
     jDIV.find("input.grid_select_check:checkbox").each(function(i) {
       var checkbox = $(this);
