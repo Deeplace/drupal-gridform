@@ -268,17 +268,17 @@ function gridform_table_fillrow($row, $vals, $row_index, $parent_name, $attribut
       $item['#id'] = drupal_html_id('edit-' . $parent_name . '-' . $row_index . '-' . $item_key);
       if ($attributes) {
         if (is_array($item['#attributes'])) {
-          $item['#attributes'] = array_merge($item['#attributes'], $attributes);
+          $item['#attributes'] = array_merge_recursive($item['#attributes'], $attributes);
         } else {
           $item['#attributes'] = $attributes;
         }
       }
-      if (isset($item['#process']) && !$item['#processed']) {
+      if (isset($item['#process']) && !$item['#processed'] || $attributes || is_array($item['#value'])) {
         foreach ($item['#process'] as $process) {
           if (function_exists($process)) {
             $form_state = array();
             $complete_form = array();
-            $item = $process($item, NULL, $form_state, $complete_form);
+            $item = $process($item, $form_state, $complete_form);
           }
         }
         $item['#processed'] = TRUE;
@@ -565,7 +565,7 @@ function form_type_tablegrid_value($element, $input = FALSE, $form_state = NULL)
 
               // Check if form_state has changed in hook_validate (like
               // contribuabil module does).
-              if (isset($form_state['values']) && is_array($form_state['values'])) {
+              if (isset($form_state['values'][$parent_name]) && is_array($form_state['values'][$parent_name])) {
                 foreach ($form_state['values'][$parent_name] as $row_ind => $row_arr) {
                   foreach ($row_arr as $vfield => $vfield_value) {
                     if (isset($vfield_value) && $out[$row_ind][$vfield] != $vfield_value) {
