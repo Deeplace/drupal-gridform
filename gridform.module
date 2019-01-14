@@ -273,7 +273,7 @@ function gridform_table_fillrow($row, $vals, $row_index, $parent_name, $attribut
           $item['#attributes'] = $attributes;
         }
       }
-      if (isset($item['#process']) && !$item['#processed'] || $attributes || is_array($item['#value'])) {
+      if (isset($item['#process']) && (!$item['#processed'] || $attributes || is_array($item['#value']))) {
         foreach ($item['#process'] as $process) {
           if (function_exists($process)) {
             $form_state = array();
@@ -350,7 +350,7 @@ function theme_tablegrid($variables) {
 
     if (is_array($item)) {
       if (!isset($element['#header']) || !is_array($element['#header'])) {
-        $header[] = $item['#title'];
+        $header[] = isset($item['#title']) ? $item['#title'] : '';
       }
       unset($item['#title'], $item['#description']);
 
