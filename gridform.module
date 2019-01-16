@@ -519,7 +519,7 @@ function form_type_tablegrid_value($element, $input = FALSE, $form_state = NULL)
   }
 
   if ($complete_parse) {
-    $row_count = count($input);
+    $row_count = isset($input) ? count($input) : 0;
     $out = array();
     $parent_name = end($element['#parents']);
 
