@@ -488,7 +488,7 @@ function form_type_tablegrid_value($element, $input = FALSE, $form_state = NULL)
         }
       } else {
         for ($row_ind = 0; $row_ind < $row_count; $row_ind++) {
-          $out[$row_ind][$child_key] = $element['#default_value'][$row_ind][$child_key];
+          $out[$row_ind][$child_key] = isset($element['#default_value'][$row_ind][$child_key]) ? $element['#default_value'][$row_ind][$child_key] : NULL;
         }
       }
     }
