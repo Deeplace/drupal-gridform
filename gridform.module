@@ -71,7 +71,7 @@ function tablegrid_validate($element, &$form_state) {
   $parent = end($element['#parents']);
   if (isset($form_state['values'][$parent]) && is_array($form_state['values'][$parent])) {
     foreach ($form_state['values'][$parent] as $key => $value) {
-      if (!count(array_filter($value))) {
+      if (is_array($value) && !count(array_filter($value))) {
         unset($form_state['values'][$parent][$key]);
       }
     }
@@ -83,7 +83,7 @@ function tablegrid_validate($element, &$form_state) {
 /**
  * Our process callback to expand the table control.
  */
-function gridform_table_expand($element) {
+function gridform_table_expand($element, $form_state, $complete_form) {
   $element['#tree'] = TRUE;
   foreach (element_children($element) as $key) {
     $element[$key]['#input'] = FALSE;
@@ -369,7 +369,7 @@ function theme_tablegrid($variables) {
         $item['#attributes'] = array('readonly' => $element['#attributes']['readonly']);
       }
 
-      // For simple form elements - generate formated stubs with placeholders.
+      // For simple form elements - generate formatted stubs with placeholders.
       if (in_array($item['#type'], array('textarea', 'hidden', 'token'))) {
         $item['#value'] = '{%ROW_VAL_PLACEHOLDER%}';
         $item['#name'] = $element['#name'] . '[{%ROW_IND_PLACEHOLDER%}][' . $item_key . ']';
@@ -473,7 +473,7 @@ function form_type_tablegrid_value($element, $input = FALSE, $form_state = NULL)
         $element[$child_key] += $info;
       }
 
-      $child_func = 'form_type_' . $element[$child_key]['#type'] . '_value';
+      $child_func = !empty($element[$child_key]['#value_callback']) ? $element[$child_key]['#value_callback'] : 'form_type_' . $element[$child_key]['#type'] . '_value';
       if (function_exists($child_func)) {
         for ($row_ind = 0; $row_ind < $row_count; $row_ind++) {
           $element[$child_key]['#default_value'] = NULL;
@@ -504,7 +504,7 @@ function form_type_tablegrid_value($element, $input = FALSE, $form_state = NULL)
       'maskedinput',
       'linked',
       'contribuabil',
-      'file_managed',
+      'managed_file',
     ))) {
       $complete_parse = TRUE;
     }
@@ -513,7 +513,12 @@ function form_type_tablegrid_value($element, $input = FALSE, $form_state = NULL)
   // Filter out empty ("zerro-ed") rows.
   if (is_array($input)) {
     foreach ($input as $row_ind => $row) {
-      if (!count(array_filter($row))) {
+      if (!count(array_filter($row, function($cell) {
+        if (is_array($cell) && array_key_exists('fid', $cell)) {
+          return (int) $cell['fid'] > 0;
+        }
+        return !empty($cell);
+      }))) {
         unset($input[$row_ind]);
       }
     }
@@ -531,7 +536,7 @@ function form_type_tablegrid_value($element, $input = FALSE, $form_state = NULL)
         $element[$child_key] += $info;
       }
 
-      $child_func = 'form_type_' . $element[$child_key]['#type'] . '_value';
+      $child_func = !empty($element[$child_key]['#value_callback']) ? $element[$child_key]['#value_callback'] : 'form_type_' . $element[$child_key]['#type'] . '_value';
       if (function_exists($child_func)) {
         for ($row_ind = 0; $row_ind < $row_count; $row_ind++) {
           $row_element = $element[$child_key];
