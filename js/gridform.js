@@ -74,6 +74,7 @@
         $(this).find('.line-number').text(renumber_grid_elements_current + 1);
       }
     });
+    tbody.trigger('gridform-updated');
   }
 
   window.forms_add_row = function (button, settings) {
