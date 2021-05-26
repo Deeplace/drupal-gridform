@@ -33,6 +33,7 @@ function gridform_element_info() {
     '#radio' => FALSE,
     '#element_validate' => array('tablegrid_validate'),
     '#show_line_numbers' => FALSE,
+    '#filter_duplicates' => FALSE,
     '#attached' => array(
       'js' => array($module_path . '/js/gridform.js'),
     ),
@@ -512,6 +513,9 @@ function form_type_tablegrid_value($element, $input = FALSE, $form_state = NULL)
 
   // Filter out empty ("zerro-ed") rows.
   if (is_array($input)) {
+    if ($element['#filter_duplicates']) {
+      $input = array_unique($input);
+    }
     foreach ($input as $row_ind => $row) {
       if (!count(array_filter($row, function($cell) {
         if (is_array($cell) && array_key_exists('fid', $cell)) {
