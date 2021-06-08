@@ -45,7 +45,8 @@ function gridform_element_info() {
 /**
  * Implements hook_validate().
  */
-function tablegrid_validate($element, &$form_state) {
+function tablegrid_validate($element, &$form_state)
+{
   if (empty($element['#value']) && !empty($element['required'])) {
     form_set_error($element['#name'], t('Fill at least one row'));
   }
@@ -71,8 +72,9 @@ function tablegrid_validate($element, &$form_state) {
   // Filter out empty ("zerro-ed") rows.
   $parent = end($element['#parents']);
   if (isset($form_state['values'][$parent]) && is_array($form_state['values'][$parent])) {
+    $file_grids = gridform_grid_rows_with_files($element);
     foreach ($form_state['values'][$parent] as $key => $value) {
-      if (is_array($value) && !count(array_filter($value))) {
+      if (is_array($value) && !count(array_filter($value)) && !in_array($key, $file_grids)) {
         unset($form_state['values'][$parent][$key]);
       }
     }
@@ -516,8 +518,9 @@ function form_type_tablegrid_value($element, $input = FALSE, $form_state = NULL)
     if ($element['#filter_duplicates']) {
       $input = array_unique($input);
     }
+    $file_grids = gridform_grid_rows_with_files($element);
     foreach ($input as $row_ind => $row) {
-      if (!count(array_filter($row, function($cell) {
+      if (!in_array($row_ind, $file_grids) && !count(array_filter($row, function($cell) {
         if (is_array($cell) && array_key_exists('fid', $cell)) {
           return (int) $cell['fid'] > 0;
         }
@@ -594,4 +597,26 @@ function form_type_tablegrid_value($element, $input = FALSE, $form_state = NULL)
   }
 
   return $input;
+}
+
+/**
+ * List gridform rows with non empty file fields.
+ *
+ * @param array $element
+ *   Tablegrid FormAPI description.
+ *
+ * @return array
+ *   List of grid row indexes.
+ */
+function gridform_grid_rows_with_files(array $element): array {
+  $file_grids = [];
+  if (isset($_FILES['files']['name'])) {
+    foreach ($_FILES['files']['name'] as $file_field_spec => $file_name) {
+      list($grid_name, $row_ind, $grid_file_field) = explode('_', $file_field_spec);
+      if ($grid_file_field && $element['#name'] === $grid_name && $file_name) {
+        $file_grids[] = intval($row_ind);
+      }
+    }
+  }
+  return $file_grids;
 }
