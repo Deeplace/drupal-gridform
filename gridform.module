@@ -516,7 +516,11 @@ function form_type_tablegrid_value($element, $input = FALSE, $form_state = NULL)
   // Filter out empty ("zerro-ed") rows.
   if (is_array($input)) {
     if ($element['#filter_duplicates']) {
-      $input = array_unique($input);
+      $input_filtered = [];
+      foreach ($input as $row) {
+        $input_filtered[implode('-', $row)] = $row;
+      }
+      $input = array_values($input_filtered);
     }
     $file_grids = gridform_grid_rows_with_files($element);
     foreach ($input as $row_ind => $row) {
