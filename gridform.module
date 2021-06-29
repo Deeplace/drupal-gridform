@@ -53,6 +53,8 @@ function tablegrid_validate($element, &$form_state)
 
   if (isset($element['#value']) && is_array($element['#value'])) {
     $children = element_children($element);
+    $parent_name = end($element['#parents']);
+
     foreach ($element['#value'] as $row_ind => $row) {
       foreach ($children as $child) {
         if (!empty($element[$child]['#required']) && (
@@ -64,6 +66,23 @@ function tablegrid_validate($element, &$form_state)
             '@fieldname' => $element[$child]['#title'],
             '@rownum' => $row_ind + 1,
           )));
+        }
+        // Run element validate functions.
+        if (isset($element[$child]['#element_validate']) && is_array($element[$child]['#element_validate']) && count($element[$child]['#element_validate'])) {
+          $form_state_test = array('values' => array());
+          $test_element = $element[$child];
+          foreach ($element[$child]['#element_validate'] as $validate_func) {
+            if (function_exists($validate_func)) {
+              $test_element['#value'] = $element['#value'][$row_ind][$child];
+              $test_element['#name'] = $parent_name . "[$row_ind][$child]";
+              $test_element['#parents'] = array(
+                $parent_name,
+                $row_ind,
+                $child,
+              );
+              $test_element = $validate_func($test_element, $form_state_test);
+            }
+          }
         }
       }
     }
