@@ -29,7 +29,10 @@ function gridform_element_info() {
     '#attributes' => array(),
     '#row_count' => 1,
     '#header' => NULL,
-    '#hide_buttons' => FALSE,
+    '#hide_buttons' => NULL,
+    '#hide_add_button' => NULL,
+    '#hide_remove_button' => NULL,
+    '#show_select_field' => NULL,
     '#radio' => FALSE,
     '#element_validate' => array('tablegrid_validate'),
     '#show_line_numbers' => FALSE,
@@ -411,9 +414,13 @@ function theme_tablegrid($variables) {
     }
   }
 
+  $readonly = !empty($element['#attributes']['readonly']);
+  $hide_buttons = !empty($element['#hide_buttons']);
+  $show_buttons = !$readonly && !$hide_buttons || ($readonly && isset($element['#hide_buttons']) && !$hide_buttons);
+
   $row_ind = 0;
   $line_number = 0;
-  $gridform_table_formatrow = function ($def_row, $value_row, $element, $attributes = array()) use (&$row_ind, &$line_number, $show_line_number) {
+  $gridform_table_formatrow = function ($def_row, $value_row, $element, $attributes = array()) use (&$row_ind, &$line_number, $show_line_number, $show_buttons) {
     $row = gridform_table_fillrow($def_row, $value_row, $row_ind++, $element['#name'], $attributes);
     // Add controls.
     if (!empty($show_line_number)) {
@@ -423,7 +430,7 @@ function theme_tablegrid($variables) {
     }
 
     $select_field = '';
-    if (!isset($element['#attributes']['readonly']) || !$element['#attributes']['readonly']) {
+    if (($show_buttons && empty($element['#hide_remove_button'])) || !empty($element['#show_select_field'])) {
       if (empty($element['#radio'])) {
         $select_field = '<input type="checkbox" class="grid_select_check" />';
       } else {
@@ -467,9 +474,14 @@ function theme_tablegrid($variables) {
     'title' => $element['#title'],
   ));
 
-  if ((!isset($element['#attributes']['readonly']) || !$element['#attributes']['readonly']) && empty($element['#hide_buttons'])) {
-    $output .= '<button class="add-row">' . t('Add row') . '</button>';
-    $output .= '<button class="del-row">' . t('Remove checked rows') . '</button>';
+  if ($show_buttons) {
+    if (empty($element['#hide_add_button'])) {
+      $output .= '<button class="add-row">' . t('Add row') . '</button>';
+    }
+
+    if (empty($element['#hide_remove_button'])) {
+      $output .= '<button class="del-row">' . t('Remove checked rows') . '</button>';
+    }
   }
 
   $element['#children'] = $output;
