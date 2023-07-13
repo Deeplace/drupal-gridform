@@ -50,8 +50,8 @@ function gridform_element_info() {
  */
 function tablegrid_validate($element, &$form_state)
 {
-  if (empty($element['#value']) && !empty($element['required'])) {
-    form_set_error($element['#name'], t('Fill at least one row'));
+  if (empty($element['#value']) && !empty($element['#required'])) {
+    form_error($element, t('Fill at least one row'));
   }
 
   if (isset($element['#value']) && is_array($element['#value'])) {
