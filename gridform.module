@@ -618,10 +618,11 @@ function form_type_tablegrid_value($element, $input = FALSE, $form_state = NULL)
               // Check if form_state has changed in hook_validate (like
               // contribuabil module does).
               if (isset($form_state['values'][$parent_name]) && is_array($form_state['values'][$parent_name])) {
-                foreach ($form_state['values'][$parent_name] as $row_ind => $row_arr) {
+                /** @var string $out_row_ind */
+                foreach ($form_state['values'][$parent_name] as $out_row_ind => $row_arr) {
                   foreach ($row_arr as $vfield => $vfield_value) {
-                    if (isset($vfield_value) && $out[$row_ind][$vfield] != $vfield_value) {
-                      $out[$row_ind][$vfield] = $vfield_value;
+                    if (isset($vfield_value) && $out[$out_row_ind][$vfield] != $vfield_value) {
+                      $out[$out_row_ind][$vfield] = $vfield_value;
                     }
                   }
                 }
