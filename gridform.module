@@ -542,6 +542,7 @@ function form_type_tablegrid_value($element, $input = FALSE, $form_state = NULL)
       'maskedinput',
       'linked',
       'contribuabil',
+      'nonresident',
       'managed_file',
     ))) {
       $complete_parse = TRUE;
