@@ -379,7 +379,8 @@ function theme_tablegrid($variables) {
 
     if (is_array($item)) {
       if (!isset($element['#header']) || !is_array($element['#header'])) {
-        $header[] = isset($item['#title']) ? $item['#title'] : '';
+        $required = !empty($item['#required']) ? theme('form_required_marker', array('element' => $item)) : '';
+        $header[] = isset($item['#title']) ? ($item['#title'] . ' ' . $required) : '';
       }
       unset($item['#title'], $item['#description']);
 
