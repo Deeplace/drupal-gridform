@@ -130,6 +130,7 @@
       ii++;
       var new_row = default_row.clone().show();
       new_row.find(":input").removeAttr("disabled");
+      new_row.find(".chosen-processed").removeClass("chosen-processed");
       new_row.find(".form-disabled").removeClass("form-disabled");
       new_row.attr("class", ii % 2 ? "odd" : "even");
       // Fill in values.
