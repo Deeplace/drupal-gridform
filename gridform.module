@@ -74,7 +74,7 @@ function tablegrid_validate($element, &$form_state)
         if (isset($element[$child]['#element_validate']) && is_array($element[$child]['#element_validate']) && count($element[$child]['#element_validate'])) {
           $test_element = $element[$child];
           foreach ($element[$child]['#element_validate'] as $validate_func) {
-            if (function_exists($validate_func)) {          
+            if (function_exists($validate_func)) {
               $test_element['#value'] = $element['#value'][$row_ind][$child];
               // Drop child elements.
               foreach (element_children($test_element) as $test_child) {
@@ -86,7 +86,12 @@ function tablegrid_validate($element, &$form_state)
                 $row_ind,
                 $child,
               );
-              $test_element = $validate_func($test_element, $form_state);
+              if (isset($test_element['#process'])) {
+                foreach ($test_element['#process'] as $process) {
+                  $test_element = $process($test_element, $form_state, $form_state['complete form']);
+                }
+              }
+              $validate_func($test_element, $form_state);
             }
           }
         }
@@ -104,8 +109,6 @@ function tablegrid_validate($element, &$form_state)
       }
     }
   }
-
-  return $element;
 }
 
 /**
@@ -588,7 +591,7 @@ function form_type_tablegrid_value($element, $input = FALSE, $form_state = NULL)
         for ($row_ind = 0; $row_ind < $row_count; $row_ind++) {
           $row_element = $element[$child_key];
           $row_element['#parents'] = array($parent_name, $row_ind, $child_key);
-          $element_value = $child_func($row_element, $input[$row_ind][$child_key]);
+          $element_value = $child_func($row_element, $input[$row_ind][$child_key], $form_state);
           if ($element_value) {
             $out[$row_ind][$child_key] = $element_value;
           } else {
@@ -602,7 +605,6 @@ function form_type_tablegrid_value($element, $input = FALSE, $form_state = NULL)
       }
       // Run element validate functions.
       if (isset($element[$child_key]['#element_validate']) && is_array($element[$child_key]['#element_validate']) && count($element[$child_key]['#element_validate'])) {
-        $form_state = array('values' => array());
         $test_element = $element[$child_key];
         foreach ($element[$child_key]['#element_validate'] as $validate_func) {
           if (function_exists($validate_func)) {
@@ -614,7 +616,7 @@ function form_type_tablegrid_value($element, $input = FALSE, $form_state = NULL)
                 $row_ind,
                 $child_key,
               );
-              $test_element = $validate_func($test_element, $form_state);
+              $validate_func($test_element, $form_state);
 
               // Check if form_state has changed in hook_validate (like
               // contribuabil module does).
