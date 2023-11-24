@@ -557,7 +557,7 @@ function form_type_tablegrid_value($element, $input = FALSE, $form_state = NULL)
     if ($element['#filter_duplicates']) {
       $input_filtered = [];
       foreach ($input as $row) {
-        $input_filtered[implode('-', $row)] = $row;
+        $input_filtered[json_encode($row)] = $row;
       }
       $input = array_values($input_filtered);
     }
