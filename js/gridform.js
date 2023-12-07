@@ -23,7 +23,7 @@
   };
 
   window.renumber_grid_elements = function (tbody) {
-    tbody.find("tr").not(".skip-tablegrid-row").each(function(i) {
+    tbody.children("tr").not(".skip-tablegrid-row").each(function(i) {
       renumber_grid_elements_current = i;
       $(this).find("div.form-item").each(function() {
         var input = $(this),
@@ -83,21 +83,22 @@
   };
 
   window.forms_add_row = function (button, settings) {
-    $(button).parent().find("tr.tablegrid_default_new_row").each(function(i) {
-      var row = $(this),
-        zebra_class = (row.parent().find("tr").length % 2) ? "odd" : "even";
-      row.before("<tr class=\"" + zebra_class + "\">" + row.html() + "</tr>");
-      var new_row = row.prev();
-      new_row.find(":input").removeAttr("disabled");
-      new_row.find(".form-disabled").removeClass("form-disabled");
+    $(button).parent().children('.tablegrid').children('tbody').children('.tablegrid_default_new_row')
+      .each(function(i) {
+        var row = $(this), zebra_class = (row.parent().find("tr").length % 2) ? "odd" : "even";
+        row.before("<tr class=\"" + zebra_class + "\">" + row.html() + "</tr>");
+        var new_row = row.prev();
+        new_row.find(":input").removeAttr("disabled");
+        new_row.find(".form-disabled").removeClass("form-disabled");
 
-      // Destroy chosen in ".tablegrid_default_new_row" rows.
-      new_row.find("select").removeClass("chosen-processed");
-      new_row.find(".chosen-container").remove();
+        // Destroy chosen in ".tablegrid_default_new_row" rows.
+        new_row.find("select").removeClass("chosen-processed");
+        new_row.find(".chosen-container").remove();
 
-      Drupal.attachBehaviors(new_row, settings);
-      window.renumber_grid_elements(row.parent());
-    });
+        Drupal.attachBehaviors(new_row, settings);
+        window.renumber_grid_elements(row.parent());
+      }
+    );
   };
 
   window.forms_del_row = function (button) {
