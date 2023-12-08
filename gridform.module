@@ -477,7 +477,7 @@ function theme_tablegrid($variables) {
   $output .= theme('table', array(
     'header' => $header,
     'rows' => $rows,
-    'attributes' => array_merge_recursive(['class' => ['tablegrid']] ,$element['#attributes']),
+    'attributes' => array_merge_recursive(['class' => ['tablegrid']], $element['#attributes']),
     'title' => $element['#title'],
   ));
 
