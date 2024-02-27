@@ -75,7 +75,7 @@ function tablegrid_validate($element, &$form_state)
           $test_element = $element[$child];
           foreach ($element[$child]['#element_validate'] as $validate_func) {
             if (function_exists($validate_func)) {
-              $test_element['#value'] = $element['#value'][$row_ind][$child];
+              $test_element['#value'] = $element['#value'][$row_ind][$child] ?? NULL;
               // Drop child elements.
               foreach (element_children($test_element) as $test_child) {
                 unset($test_element[$test_child]);
