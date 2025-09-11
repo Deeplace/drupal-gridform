@@ -61,9 +61,10 @@ function tablegrid_validate($element, &$form_state)
     foreach ($element['#value'] as $row_ind => $row) {
       foreach ($children as $child) {
         if (!empty($element[$child]['#required']) && (
-          empty($row[$child]) ||
-          is_array($row[$child]) && !count($row[$child]) ||
-          (is_string($row[$child]) && strlen(trim($row[$child])) == 0)
+          !isset($row[$child]) ||
+          ((is_array($row[$child]) || $row[$child] instanceof Countable) && count($row[$child]) == 0) ||
+          is_string($row[$child]) && drupal_strlen(trim($row[$child])) == 0 ||
+          $row[$child] === 0
         )) {
           form_set_error($element['#name'] . "][$row_ind][$child", t('Field @fieldname in row @rownum is required', array(
             '@fieldname' => $element[$child]['#title'],
