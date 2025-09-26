@@ -338,6 +338,7 @@ function gridform_table_fillrow($row, $vals, $row_index, $parent_name, $attribut
         '{%ROW_VAL_PLACEHOLDER%}' => isset($vals[$item_key]) ? $vals[$item_key] : $vals[$it],
         '{%ROW_IND_PLACEHOLDER%}' => $row_index,
         '{%ROW-IND-PLACEHOLDER%}' => $row_index,
+        '{%ROW_ATTR_DISABLED_PLACEHOLDER%}' => $attributes && !empty($attributes['disabled']) ? 'disabled' : '',
       );
       $out[] = strtr($item, $replacements);
     }
@@ -411,6 +412,7 @@ function theme_tablegrid($variables) {
           '{%ROW_IND_PLACEHOLDER%}',
           $item_key,
         );
+        $item['#attributes'] = ($item['#attributes'] ?? []) + ['{%ROW_ATTR_DISABLED_PLACEHOLDER%}' => '{%ROW_ATTR_DISABLED_PLACEHOLDER%}'];
         $item['#id'] = drupal_html_id('edit-' . $element['#name'] . '-{%ROW_IND_PLACEHOLDER%}-' . $item_key);
         $def_row[$item_key] = drupal_render($item);
       }
@@ -550,6 +552,7 @@ function form_type_tablegrid_value($element, $input = FALSE, $form_state = NULL)
       'managed_file',
     ))) {
       $complete_parse = TRUE;
+      break;
     }
   }
 
