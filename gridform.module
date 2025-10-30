@@ -209,7 +209,7 @@ function gridform_grid_expand($element) {
     }
   }
 
-  if (array_key_exists('markup', $element) && $element['markup'] === 'horizontal') {
+  if (array_key_exists('#layout', $element) && $element['#layout'] === 'horizontal') {
     $out['grid_sep_' . $el_iter] = $markups['rowend'];
   }
 
